@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}TOPPERS – Test Your Knowledge. Win Real Airtime.{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-container">
+    <div class="hero-left">
+      <div class="hero-eyebrow">🇳🇬 Nigeria's #1 Quiz Rewards Platform</div>
+      <h1 class="hero-title">Test Your Knowledge.<br/><span class="gold-text">Win Real Airtime.</span></h1>
+      <p class="hero-sub">Answer questions, climb leaderboards, and redeem your points for MTN, Airtel, Glo & 9Mobile airtime — completely free.</p>
+      <div class="hero-cta">
+        <a href="/register/" class="btn btn-gold btn-lg">🎮 Start Playing Free</a>
+        <a href="/leaderboard/" class="btn btn-outline btn-lg">📊 View Leaderboard</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="hero-stat-val">5,000+</div><div class="hero-stat-label">Active Players</div></div>
+        <div><div class="hero-stat-val">₦500K+</div><div class="hero-stat-label">Airtime Rewarded</div></div>
+        <div><div class="hero-stat-val">9</div><div class="hero-stat-label">Quiz Categories</div></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="quiz-card-demo">
+        <div class="demo-header"><span class="demo-timer">⏱ 28s</span><span class="demo-score">Score: 250 pts</span></div>
+        <div class="demo-question">What is the capital city of Nigeria?</div>
+        <div class="demo-options">
+          <div class="demo-opt correct">✓ Abuja</div>
+          <div class="demo-opt">Lagos</div>
+          <div class="demo-opt">Kano</div>
+          <div class="demo-opt">Port Harcourt</div>
+        </div>
+        <div class="demo-progress"><div class="demo-prog-bar"><div class="demo-prog-fill"></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORIES -->
+<div style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="section">
+    <h2 class="section-title">Pick Your <span class="gold-text">Category</span></h2>
+    <p class="section-sub">9 subjects, hundreds of questions — something for everyone.</p>
+    <div class="categories-grid" id="categoriesGrid"><div class="page-loader"><span class="spinner"></span></div></div>
+    <div class="text-center mt-8"><a href="/register/" class="btn btn-gold">Play All Categories →</a></div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="section">
+  <h2 class="section-title text-center">How It <span class="gold-text">Works</span></h2>
+  <p class="section-sub text-center">Three simple steps to winning airtime.</p>
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">1</div><span class="step-icon">📝</span>
+      <div class="step-title">Create Free Account</div>
+      <div class="step-desc">Sign up in 30 seconds. No payment required. Just your email and a username.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2</div><span class="step-icon">🎮</span>
+      <div class="step-title">Play & Earn Points</div>
+      <div class="step-desc">Answer questions, win challenges, maintain daily streaks — every correct answer earns you points.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3</div><span class="step-icon">📱</span>
+      <div class="step-title">Redeem for Airtime</div>
+      <div class="step-desc">Convert your points to real MTN, Airtel, Glo or 9Mobile airtime. Sent straight to your number.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 5 WAYS TO PLAY — all cards clickable -->
+<div style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="section">
+    <h2 class="section-title text-center">5 Ways to <span class="gold-text">Play</span></h2>
+    <p class="section-sub text-center">Pick your mode and start earning. Click any card to play now.</p>
+    <div class="modes-grid">
+      <div class="mode-card" onclick="goToPlay('classic')" style="cursor:pointer" role="button" tabindex="0">
+        <div class="mode-icon">🏆</div>
+        <div class="mode-name">Classic Mode</div>
+        <div class="mode-desc">15 questions, escalating difficulty. Lifelines available. Inspired by Who Wants to Be a Millionaire.</div>
+        <span class="mode-tag badge badge-gold">Most Popular</span>
+      </div>
+      <div class="mode-card daily" onclick="goToPlay('daily')" style="cursor:pointer" role="button" tabindex="0">
+        <div class="mode-icon">📅</div>
+        <div class="mode-name">Daily Challenge</div>
+        <div class="mode-desc">One challenge per day. Complete it to build your streak and earn daily bonus points.</div>
+        <span class="mode-tag badge badge-green">Streak Bonus</span>
+      </div>
+      <div class="mode-card" onclick="goToPlay('survival')" style="cursor:pointer" role="button" tabindex="0">
+        <div class="mode-icon">❤️</div>
+        <div class="mode-name">Survival Mode</div>
+        <div class="mode-desc">One life. Answer until you get one wrong. Your score multiplier grows with every correct answer.</div>
+        <span class="mode-tag badge badge-red">High Risk</span>
+      </div>
+      <div class="mode-card" onclick="goToPlay('speed')" style="cursor:pointer" role="button" tabindex="0">
+        <div class="mode-icon">⚡</div>
+        <div class="mode-name">Speed Mode</div>
+        <div class="mode-desc">60 seconds on the clock. Answer as many questions as fast as possible. Every second counts.</div>
+        <span class="mode-tag badge badge-gray">Time Attack</span>
+      </div>
+      <div class="mode-card" onclick="goToPlay('challenge')" style="cursor:pointer" role="button" tabindex="0">
+        <div class="mode-icon">⚔️</div>
+        <div class="mode-name">Live Challenge</div>
+        <div class="mode-desc">Challenge a friend to a real-time 1v1 quiz battle. Winner takes the bonus points.</div>
+        <span class="mode-tag badge badge-gold">Multiplayer</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LEADERBOARD PREVIEW -->
+<div class="section">
+  <div class="flex between items-center mb-8" style="flex-wrap:wrap;gap:12px">
+    <div>
+      <h2 class="section-title">Top <span class="gold-text">Players</span></h2>
+      <p class="section-sub">This week's leaderboard.</p>
+    </div>
+    <a href="/leaderboard/" class="btn btn-outline">Full Leaderboard →</a>
+  </div>
+  <div id="homeLeaderboard"><div class="page-loader"><span class="spinner"></span></div></div>
+</div>
+
+<!-- CTA -->
+<div style="background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.03));border-top:1px solid var(--border)">
+  <div class="section text-center">
+    <h2 class="section-title">Ready to Win <span class="gold-text">Airtime?</span></h2>
+    <p class="section-sub">Join thousands of Nigerians already playing and earning.</p>
+    <a href="/register/" class="btn btn-gold btn-lg">🚀 Create Free Account</a>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function goToPlay(mode) {
+  sessionStorage.setItem('selectedMode', mode);
+  window.location.href = isLoggedIn() ? '/play/' : '/login/';
+}
+
+// keyboard support for mode cards
+document.querySelectorAll('.mode-card[role="button"]').forEach(card => {
+  card.addEventListener('keypress', e => { if(e.key==='Enter'||e.key===' ') card.click(); });
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Load categories
+  const grid = document.getElementById('categoriesGrid');
+  try {
+    const res = await fetch('/api/v1/quiz/categories/all/');
+    grid.innerHTML = res.ok
+      ? (await res.json()).slice(0,9).map(c=>`
+          <div class="cat-card" onclick="goToPlay('classic')" style="cursor:pointer">
+            <span class="cat-icon">${c.icon||'📚'}</span>
+            <div class="cat-name">${c.name}</div>
+            <div class="cat-count">${c.question_count||0} questions</div>
+          </div>`).join('') || defaultCats()
+      : defaultCats();
+  } catch { grid.innerHTML = defaultCats(); }
+
+  // Load leaderboard
+  const lb = document.getElementById('homeLeaderboard');
+  try {
+    const res = await fetch('/api/v1/leaderboards/weekly/');
+    if (res.ok) {
+      const rows = ((await res.json()).leaderboard||[]).slice(0,5);
+      lb.innerHTML = rows.length
+        ? `<div class="lb-table">${rows.map(r=>`
+            <div class="lb-row ${r.rank<=3?'top3':''}">
+              <div class="lb-rank ${r.rank===1?'r1':r.rank===2?'r2':r.rank===3?'r3':''}">
+                ${r.rank<=3?['🥇','🥈','🥉'][r.rank-1]:r.rank}
+              </div>
+              <div class="lb-user">
+                <div class="lb-avatar">${(r.username||'?')[0].toUpperCase()}</div>
+                <div><div class="lb-username">${r.username}</div><div class="lb-country">${r.country||'Nigeria'}</div></div>
+              </div>
+              <div class="lb-points">${fmtNum(r.weekly_score||0)} pts</div>
+            </div>`).join('')}</div>`
+        : '<p class="text-gray text-center">No entries yet — be the first!</p>';
+    } else { lb.innerHTML='<p class="text-gray text-center">Leaderboard coming soon.</p>'; }
+  } catch { lb.innerHTML='<p class="text-gray text-center">Leaderboard coming soon.</p>'; }
+});
+
+function defaultCats(){
+  return [{name:'Mathematics',icon:'🔢'},{name:'Science',icon:'🔬'},{name:'General Knowledge',icon:'🌍'},
+    {name:'Technology',icon:'💻'},{name:'Logic & Reasoning',icon:'🧠'},{name:'Current Affairs',icon:'📰'},
+    {name:'African History',icon:'🏛️'},{name:'AI & Cybersecurity',icon:'🤖'},{name:'Mixed Questions',icon:'🎲'}
+  ].map(c=>`<div class="cat-card" onclick="goToPlay('classic')" style="cursor:pointer">
+    <span class="cat-icon">${c.icon}</span><div class="cat-name">${c.name}</div>
+    <div class="cat-count">Questions available</div></div>`).join('');
+}
+</script>
+{% endblock %}

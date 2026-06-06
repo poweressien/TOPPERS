@@ -1,0 +1,507 @@
+{% extends 'base.html' %}
+{% block title %}Play – TOPPERS{% endblock %}
+{% block content %}
+<div class="game-page">
+
+  <!-- ── MODE SELECTOR (shown first) ─────────────────── -->
+  <div class="mode-selector" id="modeSelector">
+    <div class="mode-selector-title">Choose Your Mode</div>
+    <div class="mode-selector-sub">Pick how you want to play today.</div>
+    <div class="mode-select-grid">
+      <div class="mode-select-card" data-mode="classic" onclick="selectMode('classic', this)">
+        <div class="ms-icon">🏆</div>
+        <div class="ms-name">Classic</div>
+        <div class="ms-desc">15 questions, lifelines, escalating difficulty</div>
+      </div>
+      <div class="mode-select-card" data-mode="daily" onclick="selectMode('daily', this)">
+        <div class="ms-icon">📅</div>
+        <div class="ms-name">Daily Challenge</div>
+        <div class="ms-desc">One per day, streak bonus</div>
+      </div>
+      <div class="mode-select-card" data-mode="survival" onclick="selectMode('survival', this)">
+        <div class="ms-icon">❤️</div>
+        <div class="ms-name">Survival</div>
+        <div class="ms-desc">One life, growing multiplier</div>
+      </div>
+      <div class="mode-select-card" data-mode="speed" onclick="selectMode('speed', this)">
+        <div class="ms-icon">⚡</div>
+        <div class="ms-name">Speed</div>
+        <div class="ms-desc">60 seconds, maximum questions</div>
+      </div>
+    </div>
+    <button class="btn btn-gold btn-full btn-lg" id="startBtn" onclick="startGame()" disabled>
+      Select a mode to start →
+    </button>
+    <div class="text-center mt-4">
+      <a href="/dashboard/" class="btn btn-ghost">← Back to Dashboard</a>
+    </div>
+  </div>
+
+  <!-- ── GAME ARENA (hidden until game starts) ────────── -->
+  <div class="game-arena hidden" id="gameArena">
+
+    <!-- Top bar -->
+    <div class="game-topbar">
+      <div class="game-mode-badge" id="modeBadge">🏆 Classic Mode</div>
+      <div class="game-score-display">
+        <div class="score-val" id="liveScore">0</div>
+        <div class="score-label">Points</div>
+      </div>
+      <div class="game-timer-wrap">
+        <div class="timer-circle" id="timerCircle">
+          <div class="timer-inner" id="timerText">30</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="game-progress">
+      <div class="progress-labels">
+        <span id="questionCounter">Question 1 of 15</span>
+        <span id="streakInfo" style="color:var(--gold)"></span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Feedback bar -->
+    <div class="feedback-bar" id="feedbackBar"></div>
+
+    <!-- Question card -->
+    <div class="question-card" id="questionCard">
+      <div class="question-diff" id="questionDiff">EASY</div>
+      <div class="question-text" id="questionText">Loading question...</div>
+    </div>
+
+    <!-- Options -->
+    <div class="options-grid" id="optionsGrid"></div>
+
+    <!-- Lifelines (classic only) -->
+    <div class="lifelines-row" id="lifelinesRow" style="display:none">
+      <button class="lifeline-btn" id="ll-fifty_fifty"   onclick="useLifeline('fifty_fifty')">
+        <span>50:50</span>
+      </button>
+      <button class="lifeline-btn" id="ll-phone_friend"  onclick="useLifeline('phone_friend')">
+        📞 Phone Friend
+      </button>
+      <button class="lifeline-btn" id="ll-ask_audience"  onclick="useLifeline('ask_audience')">
+        👥 Ask Audience
+      </button>
+      <button class="lifeline-btn" id="ll-skip"          onclick="useLifeline('skip')">
+        ⏭ Skip
+      </button>
+    </div>
+
+    <!-- Next button (shown after answering) -->
+    <div class="text-center" id="nextBtnWrap" style="display:none">
+      <button class="btn btn-gold" style="min-width:180px" onclick="nextQuestion()">
+        Next Question →
+      </button>
+    </div>
+
+    <!-- Quit -->
+    <div class="text-center mt-4">
+      <button class="btn btn-ghost" style="font-size:0.82rem" onclick="confirmQuit()">🚪 Quit Game</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── RESULTS OVERLAY ──────────────────────────────── -->
+<div class="results-overlay" id="resultsOverlay">
+  <div class="results-card">
+    <div class="results-emoji" id="resultsEmoji">🎉</div>
+    <div class="results-title" id="resultsTitle">Game Over!</div>
+    <div class="results-sub" id="resultsSub">Here's how you did</div>
+    <div class="results-stats">
+      <div class="res-stat">
+        <div class="res-stat-val" id="resScore">0</div>
+        <div class="res-stat-label">Points Earned</div>
+      </div>
+      <div class="res-stat">
+        <div class="res-stat-val" id="resCorrect">0/0</div>
+        <div class="res-stat-label">Correct</div>
+      </div>
+      <div class="res-stat">
+        <div class="res-stat-val" id="resAccuracy">0%</div>
+        <div class="res-stat-label">Accuracy</div>
+      </div>
+    </div>
+    <div class="achievements-unlocked" id="achievementsWrap" style="display:none">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--gold);margin-bottom:8px">🏆 Achievements Unlocked!</div>
+      <div id="achievementsList"></div>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="playAgain()">🎮 Play Again</button>
+      <a href="/dashboard/" class="btn btn-outline">📊 Dashboard</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+requireAuth();
+
+// ── State ─────────────────────────────────────────────
+let sessionId   = null;
+let questions   = [];
+let currentIdx  = 0;
+let currentScore = 0;
+let selectedMode = 'classic';
+let answered    = false;
+let timerInterval = null;
+let timerVal    = 30;
+let startTime   = null;
+let speedInterval = null;
+let lifelinesUsed = new Set();
+
+const MODES = {
+  classic:  { label: '🏆 Classic Mode',    showLifelines: true  },
+  daily:    { label: '📅 Daily Challenge', showLifelines: false },
+  survival: { label: '❤️  Survival Mode',  showLifelines: false },
+  speed:    { label: '⚡ Speed Mode',       showLifelines: false },
+};
+
+// ── Mode selection ────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = sessionStorage.getItem('selectedMode');
+  if (saved) selectMode(saved, document.querySelector(`[data-mode="${saved}"]`));
+});
+
+function selectMode(mode, el) {
+  selectedMode = mode;
+  document.querySelectorAll('.mode-select-card').forEach(c => c.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+  const btn = document.getElementById('startBtn');
+  btn.disabled = false;
+  btn.textContent = `Start ${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode →`;
+}
+
+// ── Start game ────────────────────────────────────────
+async function startGame() {
+  const btn = document.getElementById('startBtn');
+  setLoading(btn, true, 'Starting game...');
+  try {
+    const res  = await apiPost('/games/sessions/', { mode: selectedMode });
+    const data = await res.json();
+
+    if (res.status === 429) {
+      toast(data.error || 'Daily game limit reached. Come back tomorrow!', 'error', 5000);
+      setLoading(btn, false, `Start ${selectedMode} →`);
+      return;
+    }
+    if (!res.ok) {
+      toast(data.error || 'Could not start game.', 'error');
+      setLoading(btn, false, `Start ${selectedMode} →`);
+      return;
+    }
+
+    sessionId  = data.id;
+    questions  = data.questions || [];
+    currentIdx = 0;
+    currentScore = 0;
+    lifelinesUsed = new Set();
+
+    document.getElementById('modeSelector').classList.add('hidden');
+    document.getElementById('gameArena').classList.remove('hidden');
+    document.getElementById('modeBadge').textContent = MODES[selectedMode]?.label || selectedMode;
+
+    if (MODES[selectedMode]?.showLifelines) {
+      document.getElementById('lifelinesRow').style.display = 'flex';
+    }
+
+    // Speed mode countdown overlay
+    if (selectedMode === 'speed') startSpeedCountdown();
+    else showQuestion();
+
+  } catch(e) {
+    toast('Error starting game. Try again.', 'error');
+    setLoading(btn, false, `Start ${selectedMode} →`);
+  }
+}
+
+// ── Show question ─────────────────────────────────────
+function showQuestion() {
+  if (currentIdx >= questions.length) { endGame(); return; }
+  const q = questions[currentIdx];
+  answered = false;
+  startTime = Date.now();
+
+  // Progress
+  const pct = (currentIdx / questions.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('questionCounter').textContent =
+    `Question ${currentIdx + 1} of ${questions.length}`;
+  document.getElementById('questionDiff').textContent = (q.difficulty || 'easy').toUpperCase();
+  document.getElementById('questionText').textContent = q.text;
+  document.getElementById('feedbackBar').style.display = 'none';
+  document.getElementById('nextBtnWrap').style.display = 'none';
+
+  // Render options
+  const letters = ['A','B','C','D'];
+  const opts = q.answers || [];
+  document.getElementById('optionsGrid').innerHTML = opts.map((a, i) => `
+    <button class="option-btn" id="opt-${a.id}" onclick="submitAnswer('${q.id}','${a.id}')">
+      <span class="option-letter">${letters[i] || i+1}</span>
+      <span class="option-text">${a.text}</span>
+    </button>`).join('');
+
+  // Timer
+  startTimer(q.time_limit || 30, q);
+}
+
+// ── Timer ─────────────────────────────────────────────
+function startTimer(seconds, q) {
+  clearInterval(timerInterval);
+  timerVal = seconds;
+  updateTimerUI(seconds, seconds);
+  timerInterval = setInterval(() => {
+    timerVal--;
+    updateTimerUI(timerVal, seconds);
+    if (timerVal <= 0) {
+      clearInterval(timerInterval);
+      if (!answered) timeUp(q);
+    }
+  }, 1000);
+}
+
+function updateTimerUI(val, max) {
+  const pct = (val / max) * 100;
+  const circle = document.getElementById('timerCircle');
+  document.getElementById('timerText').textContent = val;
+  circle.style.background = `conic-gradient(${
+    val <= 5 ? 'var(--error)' : val <= 10 ? '#E67E22' : 'var(--gold)'
+  } ${pct}%, var(--bg3) 0)`;
+  if (val <= 5) document.getElementById('timerText').style.color = 'var(--error)';
+  else document.getElementById('timerText').style.color = 'var(--white)';
+}
+
+function timeUp(q) {
+  answered = true;
+  disableOptions();
+  highlightCorrect(q);
+  showFeedback(false, "⏰ Time's up!");
+  document.getElementById('nextBtnWrap').style.display = 'block';
+  // Auto-submit as wrong
+  apiPost(`/games/sessions/${sessionId}/answer/`, {
+    question_id: q.id, answer_id: null, time_taken: q.time_limit || 30
+  }).then(r => r?.json().then(d => { if (d) currentScore = d.session_score || currentScore; }));
+}
+
+// ── Submit answer ─────────────────────────────────────
+async function submitAnswer(questionId, answerId) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const timeTaken = Math.round((Date.now() - startTime) / 1000);
+  document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+  const selectedBtn = document.getElementById(`opt-${answerId}`);
+  if (selectedBtn) selectedBtn.classList.add('selected');
+
+  try {
+    const res  = await apiPost(`/games/sessions/${sessionId}/answer/`, {
+      question_id: questionId, answer_id: answerId, time_taken: timeTaken
+    });
+    const data = await res.json();
+
+    if (data.session_complete) { showResults(data); return; }
+
+    currentScore = data.session_score || currentScore;
+    document.getElementById('liveScore').textContent = fmtNum(currentScore);
+
+    const isCorrect = data.is_correct;
+    if (selectedBtn) selectedBtn.classList.add(isCorrect ? 'correct' : 'wrong');
+
+    // Highlight correct if wrong
+    if (!isCorrect && data.correct_answer?.id) {
+      const correctBtn = document.getElementById(`opt-${data.correct_answer.id}`);
+      if (correctBtn) correctBtn.classList.add('correct');
+    }
+
+    showFeedback(isCorrect,
+      isCorrect
+        ? `✅ Correct! +${data.points_earned} points`
+        : `❌ Wrong! Correct: ${data.correct_answer?.text || ''}`,
+      data.explanation
+    );
+
+    // Survival: wrong = game over
+    if (!isCorrect && selectedMode === 'survival') {
+      setTimeout(() => endGame(data), 1200);
+      return;
+    }
+
+    document.getElementById('nextBtnWrap').style.display = 'block';
+
+  } catch(e) {
+    toast('Error submitting answer.', 'error');
+    answered = false;
+    document.querySelectorAll('.option-btn').forEach(b => b.disabled = false);
+  }
+}
+
+function showFeedback(correct, msg, explanation = '') {
+  const bar = document.getElementById('feedbackBar');
+  bar.className = `feedback-bar ${correct ? 'correct' : 'wrong'}`;
+  bar.textContent = msg + (explanation ? ` — ${explanation}` : '');
+  bar.style.display = 'block';
+}
+
+function disableOptions() {
+  document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+}
+
+function highlightCorrect(q) {
+  (q.answers || []).forEach(a => {
+    if (a.is_correct) {
+      const btn = document.getElementById(`opt-${a.id}`);
+      if (btn) btn.classList.add('correct');
+    }
+  });
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= questions.length) { endGame(); return; }
+  showQuestion();
+}
+
+// ── Lifelines ─────────────────────────────────────────
+async function useLifeline(type) {
+  if (lifelinesUsed.has(type)) { toast('Lifeline already used!', 'info'); return; }
+  if (!questions[currentIdx]) return;
+  const qId = questions[currentIdx].id;
+
+  try {
+    const res  = await apiPost(`/games/sessions/${sessionId}/use-lifeline/`, {
+      lifeline_type: type, question_id: qId
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Could not use lifeline.', 'error'); return; }
+
+    lifelinesUsed.add(type);
+    document.getElementById(`ll-${type}`)?.classList.add('used');
+
+    if (type === 'fifty_fifty' && data.eliminated_answer_ids) {
+      data.eliminated_answer_ids.forEach(id => {
+        const btn = document.getElementById(`opt-${id}`);
+        if (btn) { btn.disabled = true; btn.style.opacity = '0.2'; }
+      });
+      toast('50:50 — Two wrong answers removed!', 'success');
+    } else if (type === 'phone_friend') {
+      toast(data.hint, 'info', 6000);
+    } else if (type === 'ask_audience') {
+      const votes = data.audience_votes || {};
+      const opts = document.querySelectorAll('.option-btn');
+      opts.forEach(btn => {
+        const id = btn.id.replace('opt-','');
+        const pct = votes[id] || 0;
+        btn.insertAdjacentHTML('beforeend',
+          `<span style="font-size:0.7rem;color:var(--gold);margin-left:auto">${pct}%</span>`);
+      });
+      toast('Audience has voted! Check the percentages.', 'info');
+    } else if (type === 'skip') {
+      toast('Question skipped!', 'info');
+      clearInterval(timerInterval);
+      nextQuestion();
+    } else if (type === 'second_chance') {
+      toast('Second chance granted! One more try.', 'success');
+      answered = false;
+      document.querySelectorAll('.option-btn').forEach(b => { b.disabled = false; b.className = 'option-btn'; });
+    }
+  } catch { toast('Lifeline error.', 'error'); }
+}
+
+// ── Speed mode countdown ──────────────────────────────
+function startSpeedCountdown() {
+  let t = 60;
+  speedInterval = setInterval(() => {
+    t--;
+    document.getElementById('streakInfo').textContent = `⏱ ${t}s left`;
+    if (t <= 0) { clearInterval(speedInterval); endGame(); }
+  }, 1000);
+  showQuestion();
+}
+
+// ── End / Results ─────────────────────────────────────
+async function endGame(data = null) {
+  clearInterval(timerInterval);
+  clearInterval(speedInterval);
+
+  if (!data) {
+    // Abandon to get final data
+    try {
+      const res = await apiPost(`/games/sessions/${sessionId}/abandon/`, {});
+    } catch{}
+    showResults({ score: currentScore, correct_answers: 0, wrong_answers: 0,
+      total_questions: currentIdx, accuracy: 0, points_awarded: currentScore,
+      new_total_points: (getUser()?.total_points || 0) + currentScore,
+      achievements_unlocked: [] });
+    return;
+  }
+  showResults(data);
+}
+
+function showResults(data) {
+  clearInterval(timerInterval);
+  clearInterval(speedInterval);
+
+  const score    = data.score || data.points_awarded || currentScore;
+  const correct  = data.correct_answers || 0;
+  const total    = data.total_questions || questions.length;
+  const accuracy = data.accuracy || (total > 0 ? Math.round((correct/total)*100) : 0);
+
+  document.getElementById('resScore').textContent   = fmtNum(score);
+  document.getElementById('resCorrect').textContent = `${correct}/${total}`;
+  document.getElementById('resAccuracy').textContent = `${accuracy}%`;
+
+  const emoji = accuracy >= 80 ? '🏆' : accuracy >= 50 ? '😊' : '😅';
+  document.getElementById('resultsEmoji').textContent = emoji;
+  document.getElementById('resultsTitle').textContent =
+    accuracy >= 80 ? 'Outstanding!' : accuracy >= 50 ? 'Good Job!' : 'Keep Practising!';
+  document.getElementById('resultsSub').textContent =
+    `You earned ${fmtNum(data.points_awarded || score)} points`;
+
+  const newTotal = data.new_total_points;
+  if (newTotal) {
+    localStorage.setItem('user', JSON.stringify({
+      ...(getUser() || {}), total_points: newTotal
+    }));
+    document.getElementById('navPointsVal').textContent = fmtNum(newTotal);
+  }
+
+  const achs = data.achievements_unlocked || [];
+  if (achs.length) {
+    document.getElementById('achievementsWrap').style.display = 'block';
+    document.getElementById('achievementsList').innerHTML =
+      achs.map(a => `<div class="achievement-item">${a.badge_emoji || '🏆'} ${a.name}</div>`).join('');
+  }
+
+  document.getElementById('resultsOverlay').classList.add('show');
+}
+
+function playAgain() {
+  document.getElementById('resultsOverlay').classList.remove('show');
+  document.getElementById('gameArena').classList.add('hidden');
+  document.getElementById('modeSelector').classList.remove('hidden');
+  sessionId = null; questions = []; currentIdx = 0; currentScore = 0;
+  const btn = document.getElementById('startBtn');
+  btn.textContent = `Start ${selectedMode.charAt(0).toUpperCase() + selectedMode.slice(1)} Mode →`;
+  btn.disabled = false;
+}
+
+function confirmQuit() {
+  if (confirm('Quit this game? Your current score will not be saved.')) {
+    clearInterval(timerInterval);
+    clearInterval(speedInterval);
+    if (sessionId) {
+      apiPost(`/games/sessions/${sessionId}/abandon/`, {}).catch(()=>{});
+    }
+    window.location.href = '/dashboard/';
+  }
+}
+</script>
+{% endblock %}

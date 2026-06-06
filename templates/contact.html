@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}Contact Us – TOPPERS{% endblock %}
+{% block content %}
+
+<div style="max-width:800px;margin:0 auto;padding:60px 24px">
+
+  <div style="text-align:center;margin-bottom:48px">
+    <h1 class="section-title">Get in <span class="gold-text">Touch</span></h1>
+    <p style="color:var(--gray-l);font-size:1rem;margin-top:8px">
+      Questions, feedback, or business enquiries — we'd love to hear from you.
+    </p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
+
+    <!-- Contact Form -->
+    <div class="card" style="padding:36px">
+      <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:20px">Send a Message</h2>
+
+      <div id="contactSuccess" style="display:none;background:rgba(46,204,113,0.12);border:1px solid var(--success);border-radius:10px;padding:14px;margin-bottom:16px;color:var(--success);font-size:0.9rem">
+        ✅ Message sent! We'll get back to you within 24 hours.
+      </div>
+      <div id="contactError" style="display:none;background:rgba(231,76,60,0.12);border:1px solid var(--error);border-radius:10px;padding:14px;margin-bottom:16px;color:var(--error);font-size:0.9rem"></div>
+
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" id="ctName" type="text" placeholder="Your full name"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" id="ctEmail" type="email" placeholder="your@email.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <select class="form-input" id="ctSubject">
+          <option value="">Select a subject...</option>
+          <option>General Enquiry</option>
+          <option>Account Issue</option>
+          <option>Airtime Redemption Problem</option>
+          <option>Report a Bug</option>
+          <option>Partnership / Advertising</option>
+          <option>Question Submission</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message</label>
+        <textarea class="form-input" id="ctMessage" rows="5" placeholder="Describe your issue or question in detail..." style="resize:vertical"></textarea>
+      </div>
+      <button class="btn btn-gold btn-full" id="sendBtn" onclick="sendMessage()">✉️ Send Message</button>
+    </div>
+
+    <!-- Contact Info -->
+    <div>
+      <div class="card" style="padding:28px;margin-bottom:16px">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px">📬 Contact Information</h3>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="font-size:1.4rem">📧</span>
+            <div>
+              <div style="font-size:0.78rem;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Email</div>
+              <div style="font-size:0.9rem;color:var(--gray-l)">support@toppers.ng</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="font-size:1.4rem">🌍</span>
+            <div>
+              <div style="font-size:0.78rem;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Location</div>
+              <div style="font-size:0.9rem;color:var(--gray-l)">Nigeria 🇳🇬</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="font-size:1.4rem">⏰</span>
+            <div>
+              <div style="font-size:0.78rem;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Response Time</div>
+              <div style="font-size:0.9rem;color:var(--gray-l)">Within 24–48 hours (Mon–Fri)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:28px;margin-bottom:16px">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:12px">❓ Quick Help</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a href="/terms/" style="font-size:0.88rem;color:var(--gray-l);display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            📄 Terms & Conditions
+          </a>
+          <a href="/privacy/" style="font-size:0.88rem;color:var(--gray-l);display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            🔒 Privacy Policy
+          </a>
+          <a href="/about/" style="font-size:0.88rem;color:var(--gray-l);display:flex;gap:8px;align-items:center;padding:8px 0">
+            ℹ️ About TOPPERS
+          </a>
+        </div>
+      </div>
+
+      <div class="card" style="padding:28px;background:linear-gradient(135deg,rgba(201,168,76,0.08),transparent)">
+        <div style="font-size:1.5rem;margin-bottom:8px">🐛</div>
+        <div style="font-weight:700;margin-bottom:6px">Found a Bug?</div>
+        <div style="font-size:0.85rem;color:var(--gray-l);line-height:1.6">
+          If something isn't working correctly, please include your username, 
+          the page you were on, and what happened. Screenshots are helpful!
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function sendMessage() {
+  const name    = document.getElementById('ctName').value.trim();
+  const email   = document.getElementById('ctEmail').value.trim();
+  const subject = document.getElementById('ctSubject').value;
+  const message = document.getElementById('ctMessage').value.trim();
+  const btn     = document.getElementById('sendBtn');
+  const errEl   = document.getElementById('contactError');
+  const okEl    = document.getElementById('contactSuccess');
+
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+
+  if (!name || !email || !subject || !message) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Please fill in all fields.';
+    return;
+  }
+  if (!email.includes('@')) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Please enter a valid email address.';
+    return;
+  }
+
+  setLoading(btn, true, 'Sending...');
+  // Simulate sending (wire up to Django email view or EmailJS)
+  await new Promise(r => setTimeout(r, 1200));
+  okEl.style.display = 'block';
+  document.getElementById('ctName').value    = '';
+  document.getElementById('ctEmail').value   = '';
+  document.getElementById('ctSubject').value = '';
+  document.getElementById('ctMessage').value = '';
+  setLoading(btn, false, '✉️ Send Message');
+}
+</script>
+{% endblock %}

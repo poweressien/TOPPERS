@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Leaderboard – TOPPERS{% endblock %}
+{% block content %}
+<div class="leaderboard-page">
+  <h1 class="section-title mb-4">🏆 <span class="gold-text">Leaderboard</span></h1>
+  <p class="section-sub">See who's on top across Nigeria.</p>
+
+  <div class="lb-tabs">
+    <button class="lb-tab active" onclick="loadTab('global', this)">🌍 Global All-Time</button>
+    <button class="lb-tab" onclick="loadTab('weekly', this)">📅 This Week</button>
+    <button class="lb-tab" onclick="loadTab('monthly', this)">📆 This Month</button>
+  </div>
+
+  <div id="lbContent">
+    <div class="lb-loading"><span class="spinner"></span> &nbsp; Loading leaderboard...</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ME = getUser();
+document.addEventListener('DOMContentLoaded', () => loadTab('global'));
+
+async function loadTab(type, tabEl) {
+  document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
+  if (tabEl) tabEl.classList.add('active');
+
+  const el = document.getElementById('lbContent');
+  el.innerHTML = '<div class="lb-loading"><span class="spinner"></span> &nbsp; Loading...</div>';
+
+  const endpoints = {
+    global:  '/leaderboards/global/',
+    weekly:  '/leaderboards/weekly/',
+    monthly: '/leaderboards/monthly/',
+  };
+
+  try {
+    const res = await fetch('/api/v1' + endpoints[type]);
+    if (!res.ok) { el.innerHTML = '<p class="text-gray text-center">Could not load leaderboard.</p>'; return; }
+    const data = await res.json();
+    const rows = data.leaderboard || [];
+    const yourRank = data.your_rank;
+
+    if (!rows.length) {
+      el.innerHTML = '<p class="text-gray text-center" style="padding:60px">No data yet. Be the first on the board!</p>';
+      return;
+    }
+
+    const scoreKey = type === 'global' ? 'total_points' : type === 'weekly' ? 'weekly_score' : 'monthly_score';
+    el.innerHTML = `
+      ${yourRank ? `<div style="background:rgba(201,168,76,0.08);border:1px solid var(--gold-d);border-radius:12px;padding:14px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:0.9rem;color:var(--gray-l)">Your ranking</span>
+        <span style="font-size:1.1rem;font-weight:800;color:var(--gold)">#${yourRank}</span>
+      </div>` : ''}
+      <div class="lb-table">
+        ${rows.map(r => {
+          const isMe = ME && r.username === ME.username;
+          const medal = r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : r.rank;
+          return `
+            <div class="lb-row ${r.rank <= 3 ? 'top3' : ''} ${isMe ? 'mine' : ''}">
+              <div class="lb-rank ${r.rank===1?'r1':r.rank===2?'r2':r.rank===3?'r3':''}">
+                ${medal}
+              </div>
+              <div class="lb-user">
+                <div class="lb-avatar">${(r.username||'?')[0].toUpperCase()}</div>
+                <div>
+                  <div class="lb-username">${r.username} ${isMe ? '<span class="badge badge-gold" style="font-size:0.65rem">You</span>' : ''}</div>
+                  <div class="lb-country">${r.country || 'Nigeria'}</div>
+                </div>
+              </div>
+              <div class="lb-points">${fmtNum(r[scoreKey] || 0)}</div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  } catch { el.innerHTML = '<p class="text-gray text-center">Error loading leaderboard.</p>'; }
+}
+</script>
+{% endblock %}

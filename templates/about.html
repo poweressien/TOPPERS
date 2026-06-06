@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}About Us – TOPPERS{% endblock %}
+{% block content %}
+
+<div style="max-width:900px;margin:0 auto;padding:60px 24px">
+
+  <!-- Hero -->
+  <div style="text-align:center;margin-bottom:64px">
+    <span class="badge badge-gold" style="margin-bottom:16px;font-size:0.85rem">🇳🇬 Made in Nigeria</span>
+    <h1 class="section-title">About <span class="gold-text">TOPPERS</span></h1>
+    <p style="font-size:1.1rem;color:var(--gray-l);max-width:600px;margin:16px auto 0;line-height:1.8">
+      A gamified learning and rewards platform built for Nigerians who believe
+      knowledge should pay — literally.
+    </p>
+  </div>
+
+  <!-- Mission -->
+  <div class="card card-glow" style="margin-bottom:32px;padding:40px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center">
+      <div>
+        <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:12px">Our <span class="gold-text">Mission</span></h2>
+        <p style="color:var(--gray-l);line-height:1.8;margin-bottom:16px">
+          TOPPERS was built with one goal: make learning rewarding in a real, tangible way.
+          We believe that every Nigerian student, professional, and knowledge-lover deserves
+          to be recognised and compensated for what they know.
+        </p>
+        <p style="color:var(--gray-l);line-height:1.8">
+          By combining competitive quiz gameplay with real airtime rewards, we're turning
+          idle screen time into productive, educational, and financially beneficial experiences.
+        </p>
+      </div>
+      <div style="text-align:center;font-size:5rem">🎯</div>
+    </div>
+  </div>
+
+  <!-- Values -->
+  <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:20px">What We Stand For</h2>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:48px">
+    <div class="card" style="text-align:center;padding:28px">
+      <div style="font-size:2.4rem;margin-bottom:12px">📚</div>
+      <div style="font-weight:700;margin-bottom:6px">Education First</div>
+      <div style="font-size:0.85rem;color:var(--gray-l)">Every question on TOPPERS is designed to challenge, teach, and grow your knowledge.</div>
+    </div>
+    <div class="card" style="text-align:center;padding:28px">
+      <div style="font-size:2.4rem;margin-bottom:12px">🤝</div>
+      <div style="font-weight:700;margin-bottom:6px">Community Driven</div>
+      <div style="font-size:0.85rem;color:var(--gray-l)">Built by Nigerians, for Nigerians. Our content reflects African history, culture, and current affairs.</div>
+    </div>
+    <div class="card" style="text-align:center;padding:28px">
+      <div style="font-size:2.4rem;margin-bottom:12px">🔒</div>
+      <div style="font-weight:700;margin-bottom:6px">Fair & Transparent</div>
+      <div style="font-size:0.85rem;color:var(--gray-l)">Every point earned, every airtime redeemed — tracked, logged, and verifiable in your account.</div>
+    </div>
+  </div>
+
+  <!-- What is TOPPERS -->
+  <div class="card" style="margin-bottom:32px;padding:40px">
+    <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:16px">What is <span class="gold-text">TOPPERS</span>?</h2>
+    <p style="color:var(--gray-l);line-height:1.9;margin-bottom:14px">
+      TOPPERS is a free-to-play, web-based quiz and rewards platform. Players register, choose from
+      9 knowledge categories — including Mathematics, Science, Technology, Nigerian History,
+      AI & Cybersecurity, and more — and compete in 5 unique game modes.
+    </p>
+    <p style="color:var(--gray-l);line-height:1.9;margin-bottom:14px">
+      Every correct answer earns points. Points accumulate in your TOPPERS wallet.
+      When you reach the redemption threshold, you can convert your points directly into
+      mobile airtime on MTN, Airtel, Glo, or 9Mobile — sent instantly to your phone number.
+    </p>
+    <p style="color:var(--gray-l);line-height:1.9">
+      Additional features include a daily login streak system, live 1v1 challenge battles,
+      a global leaderboard, achievement badges, a referral programme, and more.
+    </p>
+  </div>
+
+  <!-- Game Modes Summary -->
+  <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:20px">Our Game Modes</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:48px">
+    <div class="card" style="padding:20px;display:flex;gap:14px;align-items:flex-start">
+      <span style="font-size:1.8rem">🏆</span>
+      <div><div style="font-weight:700;margin-bottom:4px">Classic Mode</div><div style="font-size:0.85rem;color:var(--gray-l)">15 questions, escalating difficulty with lifelines — inspired by Who Wants to Be a Millionaire.</div></div>
+    </div>
+    <div class="card" style="padding:20px;display:flex;gap:14px;align-items:flex-start">
+      <span style="font-size:1.8rem">📅</span>
+      <div><div style="font-weight:700;margin-bottom:4px">Daily Challenge</div><div style="font-size:0.85rem;color:var(--gray-l)">One challenge per day to build your streak and claim daily bonus points.</div></div>
+    </div>
+    <div class="card" style="padding:20px;display:flex;gap:14px;align-items:flex-start">
+      <span style="font-size:1.8rem">❤️</span>
+      <div><div style="font-weight:700;margin-bottom:4px">Survival Mode</div><div style="font-size:0.85rem;color:var(--gray-l)">One life. Play until you get a question wrong. Score multiplier builds every round.</div></div>
+    </div>
+    <div class="card" style="padding:20px;display:flex;gap:14px;align-items:flex-start">
+      <span style="font-size:1.8rem">⚡</span>
+      <div><div style="font-weight:700;margin-bottom:4px">Speed Mode</div><div style="font-size:0.85rem;color:var(--gray-l)">Answer as many questions as possible in 60 seconds. Fast fingers win.</div></div>
+    </div>
+    <div class="card" style="padding:20px;display:flex;gap:14px;align-items:flex-start">
+      <span style="font-size:1.8rem">⚔️</span>
+      <div><div style="font-weight:700;margin-bottom:4px">Live Challenge</div><div style="font-size:0.85rem;color:var(--gray-l)">Real-time 1v1 battles against other players. Winner takes bonus points.</div></div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div style="text-align:center;background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.03));border:1px solid var(--border);border-radius:20px;padding:48px 32px">
+    <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:8px">Ready to Join?</h2>
+    <p style="color:var(--gray-l);margin-bottom:24px">It's free. It's fun. And it pays.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="/register/" class="btn btn-gold btn-lg">🚀 Create Free Account</a>
+      <a href="/contact/" class="btn btn-outline">✉️ Contact Us</a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

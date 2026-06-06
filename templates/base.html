@@ -1,0 +1,114 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}TOPPERS – Win While You Learn{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}"/>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ── NAV ──────────────────────────────────────────── -->
+<nav class="navbar" id="navbar">
+  <div class="nav-container">
+    <a href="/" class="nav-logo">
+      <span class="logo-icon">🏆</span>
+      <span class="logo-text">TOPPERS</span>
+    </a>
+
+    <div class="nav-links" id="navLinks">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/leaderboard/" class="nav-link">Leaderboard</a>
+      <div class="nav-auth" id="navGuest">
+        <a href="/login/" class="btn btn-outline-sm">Login</a>
+        <a href="/register/" class="btn btn-gold-sm">Play Free</a>
+      </div>
+      <div class="nav-user hidden" id="navUser">
+        <a href="/dashboard/" class="nav-link">Dashboard</a>
+        <div class="nav-points" id="navPoints">
+          <span class="points-icon">⭐</span>
+          <span id="navPointsVal">0</span>
+        </div>
+        <div class="nav-avatar" id="navAvatar" onclick="toggleUserMenu()">
+          <span id="navInitial">U</span>
+          <div class="user-dropdown" id="userDropdown">
+            <a href="/profile/" class="dropdown-item">👤 Profile</a>
+            <a href="/dashboard/" class="dropdown-item">🎮 Dashboard</a>
+            <div class="dropdown-divider"></div>
+            <a href="#" class="dropdown-item text-red" onclick="logout()">🚪 Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="nav-toggle" onclick="toggleNav()">☰</button>
+  </div>
+</nav>
+
+<!-- ── MAIN ─────────────────────────────────────────── -->
+<main class="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ── FOOTER ───────────────────────────────────────── -->
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-brand">
+      <span class="logo-icon">🏆</span>
+      <span class="logo-text">TOPPERS</span>
+      <p>Learn. Compete. Win Airtime.</p>
+    </div>
+    <div class="footer-links">
+      <a href="/about/">About</a>
+      <a href="/leaderboard/">Leaderboard</a>
+      <a href="/contact/">Contact</a>
+      <a href="/terms/">Terms</a>
+      <a href="/privacy/">Privacy</a>
+    </div>
+    <p class="footer-copy">© 2025 TOPPERS. Built for Nigeria 🇳🇬 &nbsp;|&nbsp; <a href="/admin/" style="color:var(--gray)">Admin</a></p>
+  </div>
+</footer>
+
+<!-- ── TOAST ─────────────────────────────────────────── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="{% static 'js/api.js' %}"></script>
+<script>
+  // Init nav auth state
+  document.addEventListener('DOMContentLoaded', () => {
+    const user = getUser();
+    if (user) {
+      document.getElementById('navGuest').classList.add('hidden');
+      document.getElementById('navUser').classList.remove('hidden');
+      document.getElementById('navInitial').textContent = (user.username || 'U')[0].toUpperCase();
+      document.getElementById('navPointsVal').textContent = (user.total_points || 0).toLocaleString();
+    }
+    // Scroll nav effect
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+    });
+  });
+
+  function toggleNav() {
+    document.getElementById('navLinks').classList.toggle('open');
+  }
+  function toggleUserMenu() {
+    document.getElementById('userDropdown').classList.toggle('show');
+  }
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#navAvatar')) {
+      document.getElementById('userDropdown')?.classList.remove('show');
+    }
+  });
+  function logout() {
+    clearTokens();
+    window.location.href = '/';
+  }
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

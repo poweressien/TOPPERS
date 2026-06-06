@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard – TOPPERS{% endblock %}
+{% block content %}
+<div class="dashboard-page">
+
+  <!-- Header -->
+  <div class="dash-header">
+    <div>
+      <div class="dash-greeting">Good day 👋</div>
+      <div class="dash-name" id="dashName">Loading...</div>
+      <div class="dash-sub" id="dashSub">Let's earn some airtime today</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="nav-points" style="font-size:1rem;padding:10px 18px">
+        ⭐ <span id="dashPoints">0</span> pts
+      </div>
+      <button class="btn btn-ghost" onclick="claimDailyBonus()">🎁 Daily Bonus</button>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-card stat-gold">
+      <div class="stat-label">Total Points</div>
+      <div class="stat-value" id="statPoints">0</div>
+      <div class="stat-sub">≈ ₦<span id="statNaira">0</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Games Played</div>
+      <div class="stat-value" id="statGames">0</div>
+      <div class="stat-sub"><span id="statAccuracy">0</span>% accuracy</div>
+    </div>
+    <div class="stat-card stat-green">
+      <div class="stat-label">Current Streak</div>
+      <div class="stat-value" id="statStreak">0</div>
+      <div class="stat-sub">🔥 day streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Games Today</div>
+      <div class="stat-value" id="statToday">0</div>
+      <div class="stat-sub"><span id="statRemaining">5</span> remaining</div>
+    </div>
+  </div>
+
+  <!-- Daily challenge banner -->
+  <div class="daily-banner" id="dailyBanner">
+    <div class="daily-info">
+      <span class="badge badge-gold">📅 Daily Challenge</span>
+      <div class="daily-title" id="dailyTitle">Complete today's challenge!</div>
+      <div class="daily-sub" id="dailySub">Earn bonus points and keep your streak alive.</div>
+    </div>
+    <button class="btn btn-gold" id="dailyBtn" onclick="startGame('daily')">Play Now →</button>
+  </div>
+
+  <!-- Game modes -->
+  <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:16px;">Choose Your Game Mode</h3>
+  <div class="modes-grid" style="margin-bottom:36px">
+    <div class="mode-card" onclick="startGame('classic')">
+      <div class="mode-icon">🏆</div>
+      <div class="mode-name">Classic Mode</div>
+      <div class="mode-desc">15 questions, escalating difficulty. Lifelines available.</div>
+      <span class="mode-tag badge badge-gold">Most Popular</span>
+    </div>
+    <div class="mode-card daily" onclick="startGame('daily')">
+      <div class="mode-icon">📅</div>
+      <div class="mode-name">Daily Challenge</div>
+      <div class="mode-desc">One per day. Builds your streak for bonus rewards.</div>
+      <span class="mode-tag badge badge-green">Streak Bonus</span>
+    </div>
+    <div class="mode-card" onclick="startGame('survival')">
+      <div class="mode-icon">❤️</div>
+      <div class="mode-name">Survival Mode</div>
+      <div class="mode-desc">Multiplier grows every correct answer. One mistake ends it.</div>
+      <span class="mode-tag badge badge-red">High Risk</span>
+    </div>
+    <div class="mode-card" onclick="startGame('speed')">
+      <div class="mode-icon">⚡</div>
+      <div class="mode-name">Speed Mode</div>
+      <div class="mode-desc">Answer as many questions as possible in 60 seconds.</div>
+      <span class="mode-tag badge badge-gray">Time Attack</span>
+    </div>
+  </div>
+
+  <!-- Bottom grid -->
+  <div class="dash-grid">
+    <div>
+      <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:16px;">Recent Games</h3>
+      <div id="recentGames">
+        <div class="page-loader"><span class="spinner"></span></div>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:16px;">My Achievements</h3>
+      <div id="dashAchievements">
+        <div class="page-loader"><span class="spinner"></span></div>
+      </div>
+      <div class="mt-4 text-center">
+        <a href="/profile/" class="btn btn-ghost" style="width:100%">View Full Profile →</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+requireAuth();
+const RATE = 0.05;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadProfile();
+  await loadDailyStatus();
+  await loadRecentGames();
+  await loadAchievements();
+});
+
+async function loadProfile() {
+  try {
+    const res = await apiGet('/users/me/');
+    if (!res.ok) return;
+    const u = await res.json();
+    localStorage.setItem('user', JSON.stringify(u));
+
+    document.getElementById('dashName').textContent = `Hey, ${u.username}! 👋`;
+    document.getElementById('dashSub').textContent = `Level ${u.level} — ${u.level_name}`;
+    document.getElementById('dashPoints').textContent = fmtNum(u.total_points);
+    document.getElementById('statPoints').textContent = fmtNum(u.total_points);
+    document.getElementById('statNaira').textContent  = (u.total_points * RATE).toFixed(0);
+    document.getElementById('statGames').textContent  = fmtNum(u.total_games_played);
+    document.getElementById('statAccuracy').textContent = u.accuracy_rate || 0;
+    document.getElementById('statStreak').textContent = u.current_streak || 0;
+    document.getElementById('navPointsVal').textContent = fmtNum(u.total_points);
+  } catch(e) { console.error(e); }
+}
+
+async function loadDailyStatus() {
+  try {
+    const res = await apiGet('/games/daily-status/');
+    if (!res.ok) return;
+    const d = await res.json();
+    document.getElementById('statToday').textContent = d.daily_games_played;
+    document.getElementById('statRemaining').textContent = d.games_remaining;
+
+    if (d.daily_challenge_completed) {
+      document.getElementById('dailyTitle').textContent = '✅ Daily challenge complete!';
+      document.getElementById('dailySub').textContent = 'Come back tomorrow to keep your streak.';
+      document.getElementById('dailyBtn').disabled = true;
+      document.getElementById('dailyBtn').textContent = 'Done for Today';
+      document.getElementById('dailyBanner').style.borderColor = 'var(--success)';
+    }
+    if (d.games_remaining === 0) {
+      document.getElementById('statToday').style.color = 'var(--error)';
+      document.querySelector('.daily-banner .btn').textContent = 'Daily Limit Reached';
+    }
+  } catch(e) { console.error(e); }
+}
+
+async function loadRecentGames() {
+  const el = document.getElementById('recentGames');
+  try {
+    const res = await apiGet('/games/sessions/history/');
+    if (!res.ok) { el.innerHTML = '<p class="text-gray">No games yet. Start playing!</p>'; return; }
+    const sessions = await res.json();
+    if (!sessions.length) { el.innerHTML = '<p class="text-gray">No games yet — pick a mode above!</p>'; return; }
+    el.innerHTML = sessions.slice(0,5).map(s => `
+      <div class="card" style="padding:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <span class="badge badge-gray" style="margin-bottom:6px">${s.mode.replace('_',' ').toUpperCase()}</span>
+          <div style="font-size:0.88rem;color:var(--gray-l)">${s.correct_answers}/${s.questions_answered} correct</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:1.2rem;font-weight:800;color:var(--gold)">${fmtNum(s.score)} pts</div>
+          <div style="font-size:0.75rem;color:var(--gray)">${fmtDate(s.start_time)}</div>
+        </div>
+      </div>`).join('');
+  } catch { el.innerHTML = '<p class="text-gray">Could not load history.</p>'; }
+}
+
+async function loadAchievements() {
+  const el = document.getElementById('dashAchievements');
+  try {
+    const res = await apiGet('/rewards/achievements/mine/');
+    if (!res.ok) { el.innerHTML = '<p class="text-gray">No achievements yet.</p>'; return; }
+    const list = await res.json();
+    if (!list.length) { el.innerHTML = '<p class="text-gray text-center" style="font-size:0.88rem">Play games to unlock achievements! 🏆</p>'; return; }
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      ${list.slice(0,6).map(a => `
+        <div class="ach-card earned" title="${a.achievement.description}">
+          <div class="ach-emoji">${a.achievement.badge_emoji}</div>
+          <div class="ach-name">${a.achievement.name}</div>
+        </div>`).join('')}
+    </div>`;
+  } catch { el.innerHTML = '<p class="text-gray">Could not load achievements.</p>'; }
+}
+
+async function claimDailyBonus() {
+  try {
+    const res = await apiPost('/rewards/daily-bonus/', {});
+    const d   = await res.json();
+    if (res.ok && !d.already_claimed) {
+      toast(`+${d.points_awarded} Daily Bonus! 🎁`, 'success');
+      loadProfile();
+    } else {
+      toast(d.message || 'Already claimed today!', 'info');
+    }
+  } catch { toast('Could not claim bonus.', 'error'); }
+}
+
+function startGame(mode) {
+  sessionStorage.setItem('selectedMode', mode);
+  window.location.href = '/play/';
+}
+</script>
+{% endblock %}

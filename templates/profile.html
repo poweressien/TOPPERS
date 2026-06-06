@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% block title %}My Profile – TOPPERS{% endblock %}
+{% block content %}
+<div class="profile-page">
+
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="profile-avatar-lg" id="profileAvatar">?</div>
+    <div style="flex:1">
+      <div class="profile-name" id="profileName">Loading...</div>
+      <div class="profile-level" id="profileLevel">Level 1 – Beginner</div>
+      <div class="profile-email" id="profileEmail"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <span class="badge badge-gold" id="profileStreak">🔥 0 day streak</span>
+        <span class="badge badge-gray" id="profileCountry">🇳🇬 Nigeria</span>
+        <span class="badge badge-gray" id="profileJoined"></span>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:2rem;font-weight:900;color:var(--gold)" id="profilePoints">0</div>
+      <div style="font-size:0.8rem;color:var(--gray)">Total Points</div>
+      <div style="font-size:0.9rem;color:var(--gray-l);margin-top:4px">≈ ₦<span id="profileNaira">0</span></div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row" style="margin-bottom:28px">
+    <div class="stat-card">
+      <div class="stat-label">Games Played</div>
+      <div class="stat-value" id="pGames">0</div>
+    </div>
+    <div class="stat-card stat-green">
+      <div class="stat-label">Accuracy</div>
+      <div class="stat-value" id="pAccuracy">0%</div>
+    </div>
+    <div class="stat-card stat-gold">
+      <div class="stat-label">Challenges Won</div>
+      <div class="stat-value" id="pChallenges">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Airtime Earned</div>
+      <div class="stat-value" id="pAirtime">₦0</div>
+    </div>
+  </div>
+
+  <div class="profile-grid">
+
+    <!-- LEFT COLUMN -->
+    <div>
+      <!-- Achievements -->
+      <div class="card" style="margin-bottom:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="font-size:1rem;font-weight:700">🏆 Achievements</h3>
+          <span class="badge badge-gold" id="achCount">0/9</span>
+        </div>
+        <div class="achievements-grid" id="achievementsGrid">
+          <div class="page-loader"><span class="spinner"></span></div>
+        </div>
+      </div>
+
+      <!-- Referral -->
+      <div class="card">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:12px">🤝 Referral Programme</h3>
+        <p style="font-size:0.85rem;color:var(--gray-l);margin-bottom:14px">
+          Share your code. Earn 500 points for every friend who joins.
+        </p>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <div class="form-input" id="referralCode" style="font-weight:700;letter-spacing:2px;cursor:pointer;background:var(--bg3)">Loading...</div>
+          <button class="btn btn-outline" onclick="copyReferral()" style="padding:0 18px;white-space:nowrap">📋 Copy</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div class="stat-card" style="padding:14px;text-align:center">
+            <div class="stat-value" id="refTotal" style="font-size:1.3rem">0</div>
+            <div class="stat-label">Total</div>
+          </div>
+          <div class="stat-card stat-green" style="padding:14px;text-align:center">
+            <div class="stat-value" id="refPaid" style="font-size:1.3rem">0</div>
+            <div class="stat-label">Paid</div>
+          </div>
+          <div class="stat-card" style="padding:14px;text-align:center">
+            <div class="stat-value" id="refPending" style="font-size:1.3rem">0</div>
+            <div class="stat-label">Pending</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <!-- Redeem Airtime -->
+      <div class="redeem-card" style="margin-bottom:24px">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:14px">📱 Redeem Airtime</h3>
+        <div class="redeem-balance">
+          <div class="redeem-pts" id="redeemPoints">0 pts</div>
+          <div class="redeem-naira">≈ ₦<span id="redeemNaira">0</span> airtime value</div>
+          <div style="font-size:0.75rem;color:var(--gray);margin-top:4px">Minimum: 2,000 pts = ₦100</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Select Network</label>
+          <div class="network-pills">
+            <div class="network-pill selected" data-net="mtn"     onclick="selectNetwork('mtn',this)">MTN</div>
+            <div class="network-pill" data-net="airtel"   onclick="selectNetwork('airtel',this)">Airtel</div>
+            <div class="network-pill" data-net="glo"      onclick="selectNetwork('glo',this)">Glo</div>
+            <div class="network-pill" data-net="9mobile"  onclick="selectNetwork('9mobile',this)">9Mobile</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input class="form-input" id="redeemPhone" type="tel" placeholder="e.g. 08012345678" maxlength="14"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Points to Redeem</label>
+          <input class="form-input" id="redeemPts" type="number" placeholder="Min 2000" min="2000" step="500"/>
+          <div class="form-hint">= ₦<span id="nairaPreview">0</span> airtime</div>
+        </div>
+        <button class="btn btn-gold btn-full" id="redeemBtn" onclick="redeemAirtime()">
+          💸 Redeem Airtime
+        </button>
+      </div>
+
+      <!-- Transaction History -->
+      <div class="card">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:14px">📜 Recent Transactions</h3>
+        <div id="transactions">
+          <div class="page-loader"><span class="spinner"></span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+requireAuth();
+let selectedNetwork = 'mtn';
+const RATE = 0.05;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadProfile();
+  await loadAchievements();
+  await loadReferrals();
+  await loadTransactions();
+
+  // Live naira preview
+  document.getElementById('redeemPts').addEventListener('input', function() {
+    document.getElementById('nairaPreview').textContent = (this.value * RATE).toFixed(0);
+  });
+});
+
+async function loadProfile() {
+  try {
+    const res = await apiGet('/users/me/');
+    if (!res.ok) return;
+    const u = await res.json();
+    localStorage.setItem('user', JSON.stringify(u));
+
+    document.getElementById('profileAvatar').textContent  = (u.username||'U')[0].toUpperCase();
+    document.getElementById('profileName').textContent    = u.username;
+    document.getElementById('profileLevel').textContent   = `Level ${u.level} – ${u.level_name}`;
+    document.getElementById('profileEmail').textContent   = u.email;
+    document.getElementById('profileStreak').textContent  = `🔥 ${u.current_streak} day streak`;
+    document.getElementById('profileCountry').textContent = `🌍 ${u.country || 'Nigeria'}`;
+    document.getElementById('profileJoined').textContent  = `Joined ${fmtDate(u.date_joined)}`;
+    document.getElementById('profilePoints').textContent  = fmtNum(u.total_points);
+    document.getElementById('profileNaira').textContent   = (u.total_points * RATE).toFixed(0);
+    document.getElementById('pGames').textContent         = fmtNum(u.total_games_played);
+    document.getElementById('pAccuracy').textContent      = `${u.accuracy_rate||0}%`;
+    document.getElementById('pChallenges').textContent    = fmtNum(u.total_challenges_won);
+    document.getElementById('pAirtime').textContent       = `₦${u.total_airtime_earned||0}`;
+    document.getElementById('referralCode').textContent   = u.referral_code;
+    document.getElementById('redeemPoints').textContent   = `${fmtNum(u.total_points)} pts`;
+    document.getElementById('redeemNaira').textContent    = (u.total_points * RATE).toFixed(0);
+    document.getElementById('navPointsVal').textContent   = fmtNum(u.total_points);
+  } catch(e) { console.error(e); }
+}
+
+async function loadAchievements() {
+  const grid = document.getElementById('achievementsGrid');
+  try {
+    const [allRes, myRes] = await Promise.all([
+      fetch('/api/v1/rewards/achievements/'),
+      apiGet('/rewards/achievements/mine/')
+    ]);
+    const all  = allRes.ok ? await allRes.json() : [];
+    const mine = myRes.ok  ? await myRes.json()  : [];
+    const earned = new Set(mine.map(m => m.achievement.id));
+
+    document.getElementById('achCount').textContent = `${earned.size}/${all.length}`;
+    grid.innerHTML = all.map(a => `
+      <div class="ach-card ${earned.has(a.id) ? 'earned' : 'locked'}" title="${a.description}">
+        <div class="ach-emoji">${a.badge_emoji}</div>
+        <div class="ach-name">${a.name}</div>
+      </div>`).join('');
+  } catch { grid.innerHTML = '<p class="text-gray text-center">Could not load achievements.</p>'; }
+}
+
+async function loadReferrals() {
+  try {
+    const res = await apiGet('/users/me/referrals/');
+    if (!res.ok) return;
+    const d = await res.json();
+    document.getElementById('refTotal').textContent   = d.total_referrals   || 0;
+    document.getElementById('refPaid').textContent    = d.paid_referrals     || 0;
+    document.getElementById('refPending').textContent = d.pending_referrals  || 0;
+  } catch {}
+}
+
+async function loadTransactions() {
+  const el = document.getElementById('transactions');
+  try {
+    const res = await apiGet('/rewards/transactions/');
+    if (!res.ok) { el.innerHTML = '<p class="text-gray">No transactions yet.</p>'; return; }
+    const txns = await res.json();
+    const list = txns.results || txns;
+    if (!list.length) { el.innerHTML = '<p class="text-gray text-center" style="font-size:0.88rem">No transactions yet.</p>'; return; }
+    el.innerHTML = list.slice(0,8).map(t => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:0.88rem;font-weight:600">${t.type_display}</div>
+          <div style="font-size:0.75rem;color:var(--gray)">${fmtDate(t.created_at)}</div>
+        </div>
+        <div style="font-size:0.95rem;font-weight:700;color:${t.amount >= 0 ? 'var(--success)' : 'var(--error)'}">
+          ${t.amount >= 0 ? '+' : ''}${fmtNum(t.amount)} pts
+        </div>
+      </div>`).join('');
+  } catch { el.innerHTML = '<p class="text-gray">Could not load transactions.</p>'; }
+}
+
+function selectNetwork(net, el) {
+  selectedNetwork = net;
+  document.querySelectorAll('.network-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function redeemAirtime() {
+  const phone  = document.getElementById('redeemPhone').value.trim();
+  const points = parseInt(document.getElementById('redeemPts').value);
+  const btn    = document.getElementById('redeemBtn');
+
+  if (!phone) { toast('Enter your phone number.', 'error'); return; }
+  if (!points || points < 2000) { toast('Minimum redemption is 2,000 points.', 'error'); return; }
+
+  setLoading(btn, true, 'Processing...');
+  try {
+    const res  = await apiPost('/rewards/airtime/redeem/', {
+      network: selectedNetwork, phone_number: phone, points_to_redeem: points
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast(`✅ Redemption submitted! ₦${data.naira_value} airtime coming to ${phone}`, 'success', 6000);
+      document.getElementById('redeemPts').value = '';
+      document.getElementById('redeemPhone').value = '';
+      loadProfile();
+      loadTransactions();
+    } else {
+      const msg = Object.values(data).flat()[0] || data.error || 'Redemption failed.';
+      toast(msg, 'error');
+    }
+  } catch { toast('Connection error.', 'error'); }
+  setLoading(btn, false, '💸 Redeem Airtime');
+}
+
+function copyReferral() {
+  const code = document.getElementById('referralCode').textContent;
+  navigator.clipboard.writeText(code).then(() => toast('Referral code copied! 📋', 'success'));
+}
+</script>
+{% endblock %}

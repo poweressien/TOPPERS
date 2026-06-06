@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Signing you in – TOPPERS</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0A0A0A; color: #fff;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh; display: flex;
+      align-items: center; justify-content: center;
+    }
+    .wrap { text-align: center; }
+    .logo { font-size: 3rem; margin-bottom: 16px; }
+    .title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+    .sub { color: #888; font-size: 0.9rem; }
+    .spinner {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 3px solid rgba(201,168,76,0.2);
+      border-top-color: #C9A84C;
+      animation: spin 0.7s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { color: #E74C3C; font-size: 0.9rem; margin-top: 12px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="logo">🏆</div>
+    <div class="title">Signing you in...</div>
+    <div class="sub">Just a moment</div>
+    <div class="spinner"></div>
+    <div class="error" id="errMsg">
+      Login failed. <a href="/login/" style="color:#C9A84C">Try again →</a>
+    </div>
+  </div>
+
+  <script>
+    (async function () {
+      try {
+        // Fetch JWT tokens for the session-authenticated user
+        const res = await fetch('/api/v1/auth/oauth-token/', {
+          credentials: 'include', // send Django session cookie
+        });
+
+        if (!res.ok) throw new Error('Token fetch failed');
+
+        const data = await res.json();
+        localStorage.setItem('access_token',  data.tokens.access);
+        localStorage.setItem('refresh_token', data.tokens.refresh);
+        localStorage.setItem('user',          JSON.stringify(data.user));
+
+        // Redirect to dashboard
+        window.location.href = '/dashboard/';
+
+      } catch (err) {
+        document.querySelector('.spinner').style.display = 'none';
+        document.querySelector('.sub').style.display    = 'none';
+        document.querySelector('.title').textContent    = 'Sign-in failed';
+        document.getElementById('errMsg').style.display = 'block';
+      }
+    })();
+  </script>
+</body>
+</html>
