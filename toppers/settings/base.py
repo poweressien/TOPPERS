@@ -1,6 +1,5 @@
 """
 TOPPERS – Base Settings
-Shared across all environments.
 """
 import os
 from pathlib import Path
@@ -9,7 +8,6 @@ import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# ─── Environment ──────────────────────────────────────────────
 env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, ['localhost', '127.0.0.1']),
@@ -20,7 +18,7 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-change-me-in-production'
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
-# ─── Application Definition ───────────────────────────────────
+# ── Applications ──────────────────────────────────────────────
 DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -42,9 +40,17 @@ THIRD_PARTY_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'channels',
-    'django_celery_beat',
-    'django_celery_results',
 ]
+
+# Optional apps — only include if installed
+OPTIONAL_APPS = []
+for app in ['daphne', 'django_celery_beat', 'django_celery_results', 'debug_toolbar']:
+    try:
+        import importlib
+        importlib.import_module(app.replace('.', '/').replace('/', '.'))
+        OPTIONAL_APPS.append(app)
+    except ImportError:
+        pass
 
 LOCAL_APPS = [
     'apps.accounts',
@@ -57,7 +63,7 @@ LOCAL_APPS = [
     'apps.advertisements',
 ]
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + OPTIONAL_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -93,12 +99,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'toppers.wsgi.application'
 ASGI_APPLICATION = 'toppers.routing.application'
 
-# ─── Database ─────────────────────────────────────────────────
+# ── Database ──────────────────────────────────────────────────
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='postgres://toppers_user:password@localhost:5432/toppers_db')
+    'default': env.db('DATABASE_URL', default='sqlite:///db.sqlite3')
 }
 
-# ─── Auth ─────────────────────────────────────────────────────
+# ── Auth ──────────────────────────────────────────────────────
 AUTH_USER_MODEL = 'accounts.CustomUser'
 SITE_ID = 1
 
@@ -109,27 +115,28 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ─── Internationalization ─────────────────────────────────────
+# ── Internationalisation ──────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Lagos'
 USE_I18N = True
 USE_TZ = True
 
-# ─── Static & Media Files ─────────────────────────────────────
+# ── Static & Media ────────────────────────────────────────────
 STATIC_URL = '/static/'
 STATIC_ROOT = env('STATIC_ROOT', default=str(BASE_DIR / 'staticfiles'))
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = env('MEDIA_ROOT', default=str(BASE_DIR / 'media'))
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ─── REST Framework ───────────────────────────────────────────
+# ── REST Framework ────────────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -148,11 +155,10 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/hour',
         'user': '1000/hour',
-        'game_submit': '120/minute',
     },
 }
 
-# ─── JWT ──────────────────────────────────────────────────────
+# ── JWT ───────────────────────────────────────────────────────
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
@@ -163,7 +169,7 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# ─── Allauth / OAuth ──────────────────────────────────────────
+# ── Allauth / OAuth ───────────────────────────────────────────
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -171,11 +177,10 @@ AUTHENTICATION_BACKENDS = [
 
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_UNIQUE_EMAIL = True
 
-# ─── Custom Allauth Adapters ──────────────────────────
 ACCOUNT_ADAPTER = 'apps.accounts.adapters.CustomAccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'apps.accounts.adapters.CustomSocialAccountAdapter'
 
@@ -191,35 +196,33 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-# ─── CORS ─────────────────────────────────────────────────────
+# ── CORS ──────────────────────────────────────────────────────
+CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
-# ─── Redis & Channels ─────────────────────────────────────────
+# ── Redis & Channels ──────────────────────────────────────────
 REDIS_URL = env('REDIS_URL', default='redis://localhost:6379/0')
 
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [REDIS_URL],
-        },
-    },
+        'CONFIG': {'hosts': [REDIS_URL]},
+    }
 }
 
-# ─── Celery ───────────────────────────────────────────────────
+# ── Celery ────────────────────────────────────────────────────
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://localhost:6379/1')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Africa/Lagos'
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
-# ─── Email ────────────────────────────────────────────────────
+# ── Email ─────────────────────────────────────────────────────
 EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = env.int('EMAIL_PORT', default=587)
@@ -228,43 +231,35 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='TOPPERS <noreply@toppers.ng>')
 
-# ─── Paystack ─────────────────────────────────────────────────
+# ── Paystack ──────────────────────────────────────────────────
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY', default='')
 PAYSTACK_PUBLIC_KEY = env('PAYSTACK_PUBLIC_KEY', default='')
 
-# ─── VTPass (Airtime) ─────────────────────────────────────────
+# ── VTPass ────────────────────────────────────────────────────
 VTPASS_API_KEY = env('VTPASS_API_KEY', default='')
-VTPASS_PUBLIC_KEY = env('VTPASS_PUBLIC_KEY', default='')
 VTPASS_SECRET_KEY = env('VTPASS_SECRET_KEY', default='')
 VTPASS_BASE_URL = env('VTPASS_BASE_URL', default='https://sandbox.vtpass.com/api')
 
-# ─── Frontend ─────────────────────────────────────────────────
-FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:3000')
+FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:8000')
 
-# ─── Game Configuration ───────────────────────────────────────
+# ── Game Config ───────────────────────────────────────────────
 GAME_CONFIG = {
-    'DAILY_GAME_LIMIT': env.int('DAILY_GAME_LIMIT', default=5),
-    'POINTS_TO_NAIRA_RATE': float(env('POINTS_TO_NAIRA_RATE', default='0.05')),
-    'MIN_REDEMPTION_POINTS': env.int('MIN_REDEMPTION_POINTS', default=2000),
-    'REFERRAL_BONUS_POINTS': env.int('REFERRAL_BONUS_POINTS', default=500),
-    'DAILY_LOGIN_BONUS': env.int('DAILY_LOGIN_BONUS', default=50),
-    'STREAK_BONUS_MULTIPLIER': 1.5,
-    'CHALLENGE_WIN_BONUS': 100,
-    'CLASSIC_MODE_QUESTIONS': 15,
-    'SURVIVAL_BASE_MULTIPLIER': 1.0,
+    'DAILY_GAME_LIMIT':          env.int('DAILY_GAME_LIMIT', default=5),
+    'POINTS_TO_NAIRA_RATE':      float(env('POINTS_TO_NAIRA_RATE', default='0.05')),
+    'MIN_REDEMPTION_POINTS':     env.int('MIN_REDEMPTION_POINTS', default=2000),
+    'REFERRAL_BONUS_POINTS':     env.int('REFERRAL_BONUS_POINTS', default=500),
+    'DAILY_LOGIN_BONUS':         env.int('DAILY_LOGIN_BONUS', default=50),
+    'STREAK_BONUS_MULTIPLIER':   1.5,
+    'CHALLENGE_WIN_BONUS':       100,
+    'CLASSIC_MODE_QUESTIONS':    15,
+    'SURVIVAL_BASE_MULTIPLIER':  1.0,
     'SURVIVAL_MULTIPLIER_INCREMENT': 0.1,
-    'SPEED_MODE_DURATION': 60,  # seconds
+    'SPEED_MODE_DURATION':       60,
     'LIFELINES_PER_CLASSIC_GAME': {
-        'fifty_fifty': 1,
-        'phone_friend': 1,
-        'ask_audience': 1,
-        'skip': 1,
-        'second_chance': 1,
+        'fifty_fifty': 1, 'phone_friend': 1,
+        'ask_audience': 1, 'skip': 1, 'second_chance': 1,
     },
     'DIFFICULTY_POINTS': {
-        'easy': 10,
-        'medium': 25,
-        'hard': 50,
-        'expert': 100,
+        'easy': 10, 'medium': 25, 'hard': 50, 'expert': 100,
     },
 }
