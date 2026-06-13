@@ -109,7 +109,7 @@ class UserStatsView(APIView):
             'total_xp': user.total_xp,
             'level': user.level,
             'level_name': user.level_name,
-            'total_airtime_earned': str(user.total_airtime_earned),
+            'total_withdrawn_naira': str(user.total_withdrawn_naira),
         })
 
 
@@ -166,4 +166,37 @@ class OAuthTokenView(APIView):
                 'refresh': str(refresh),
             },
             'user': UserProfileSerializer(user).data,
+        })
+
+
+# ─── Public Platform Stats ────────────────────────────────────
+from django.contrib.auth import get_user_model as _get_user_model2
+
+
+class PlatformStatsView(APIView):
+    """Public stats for homepage — no auth required."""
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        from apps.games.models import GameSession
+        from apps.rewards.models import WithdrawalRequest
+        from apps.quiz.models import Question, Category
+
+        User = _get_user_model2()
+
+        total_users      = User.objects.filter(is_active=True).count()
+        total_games      = GameSession.objects.filter(status='completed').count()
+        total_questions  = Question.objects.filter(is_active=True).count()
+        total_categories = Category.objects.filter(is_active=True, parent=None).count()
+        from django.db.models import Sum as _Sum
+        total_withdrawn  = WithdrawalRequest.objects.filter(
+            status='completed'
+        ).aggregate(total=_Sum('amount_to_receive'))['total'] or 0
+
+        return Response({
+            'total_users':      total_users,
+            'total_games':      total_games,
+            'total_questions':  total_questions,
+            'total_categories': total_categories,
+            'total_withdrawn':  float(total_withdrawn),
         })

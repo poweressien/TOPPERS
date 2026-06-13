@@ -235,6 +235,7 @@ class GameSessionViewSet(ModelViewSet):
             user=user,
             amount=points_awarded,
             transaction_type='earned_game',
+            enforce_cap=True,
             description=f'{session.get_mode_display()} – {session.correct_answers} correct',
             session=session,
         )

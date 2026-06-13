@@ -16,7 +16,7 @@ class CustomUserAdmin(UserAdmin):
         ('Points & Level', {'fields': ('total_points', 'total_xp', 'level')}),
         ('Referral', {'fields': ('referral_code', 'referred_by')}),
         ('Streak & Daily', {'fields': ('current_streak', 'longest_streak', 'last_login_date', 'daily_games_played', 'last_game_reset')}),
-        ('Stats', {'fields': ('total_games_played', 'total_correct_answers', 'total_wrong_answers', 'total_challenges_won', 'total_airtime_earned')}),
+        ('Stats', {'fields': ('total_games_played', 'total_correct_answers', 'total_wrong_answers', 'total_challenges_won', 'total_withdrawn_naira')}),
     )
 
 

@@ -64,7 +64,8 @@ class CustomUser(AbstractUser):
     total_correct_answers = models.IntegerField(default=0)
     total_wrong_answers = models.IntegerField(default=0)
     total_challenges_won = models.IntegerField(default=0)
-    total_airtime_earned = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_withdrawn_naira = models.DecimalField(max_digits=10, decimal_places=2, default=0,
+        help_text='Total Naira successfully withdrawn to bank')
 
     class Meta:
         verbose_name = 'User'

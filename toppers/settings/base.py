@@ -18,7 +18,6 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-change-me-in-production'
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
-# ── Applications ──────────────────────────────────────────────
 DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -42,12 +41,17 @@ THIRD_PARTY_APPS = [
     'channels',
 ]
 
-# Optional apps — only include if installed
+DAPHNE_APPS = []
+try:
+    import daphne  # noqa
+    DAPHNE_APPS = ['daphne']
+except ImportError:
+    pass
+
 OPTIONAL_APPS = []
-for app in ['daphne', 'django_celery_beat', 'django_celery_results', 'debug_toolbar']:
+for app in ['django_celery_beat', 'django_celery_results']:
     try:
-        import importlib
-        importlib.import_module(app.replace('.', '/').replace('/', '.'))
+        __import__(app)
         OPTIONAL_APPS.append(app)
     except ImportError:
         pass
@@ -63,7 +67,7 @@ LOCAL_APPS = [
     'apps.advertisements',
 ]
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + OPTIONAL_APPS + LOCAL_APPS
+INSTALLED_APPS = DAPHNE_APPS + DJANGO_APPS + THIRD_PARTY_APPS + OPTIONAL_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -99,12 +103,10 @@ TEMPLATES = [
 WSGI_APPLICATION = 'toppers.wsgi.application'
 ASGI_APPLICATION = 'toppers.routing.application'
 
-# ── Database ──────────────────────────────────────────────────
 DATABASES = {
     'default': env.db('DATABASE_URL', default='sqlite:///db.sqlite3')
 }
 
-# ── Auth ──────────────────────────────────────────────────────
 AUTH_USER_MODEL = 'accounts.CustomUser'
 SITE_ID = 1
 
@@ -115,13 +117,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ── Internationalisation ──────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Lagos'
 USE_I18N = True
 USE_TZ = True
 
-# ── Static & Media ────────────────────────────────────────────
 STATIC_URL = '/static/'
 STATIC_ROOT = env('STATIC_ROOT', default=str(BASE_DIR / 'staticfiles'))
 STATICFILES_DIRS = [BASE_DIR / 'static']
@@ -132,7 +132,6 @@ MEDIA_ROOT = env('MEDIA_ROOT', default=str(BASE_DIR / 'media'))
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ── REST Framework ────────────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -158,7 +157,6 @@ REST_FRAMEWORK = {
     },
 }
 
-# ── JWT ───────────────────────────────────────────────────────
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
@@ -169,7 +167,6 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# ── Allauth / OAuth ───────────────────────────────────────────
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -177,7 +174,6 @@ AUTHENTICATION_BACKENDS = [
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_UNIQUE_EMAIL = True
-# Django-allauth v0.60+ settings
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 
@@ -196,17 +192,11 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-# ── CORS ──────────────────────────────────────────────────────
 CORS_ALLOW_ALL_ORIGINS = DEBUG
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-]
+CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']
 CORS_ALLOW_CREDENTIALS = True
 
-# ── Redis & Channels ──────────────────────────────────────────
 REDIS_URL = env('REDIS_URL', default='redis://localhost:6379/0')
-
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -214,15 +204,12 @@ CHANNEL_LAYERS = {
     }
 }
 
-# ── Celery ────────────────────────────────────────────────────
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://localhost:6379/1')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Africa/Lagos'
 
-# ── Email ─────────────────────────────────────────────────────
 EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = env.int('EMAIL_PORT', default=587)
@@ -231,30 +218,36 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='TOPPERS <noreply@toppers.ng>')
 
-# ── Paystack ──────────────────────────────────────────────────
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY', default='')
 PAYSTACK_PUBLIC_KEY = env('PAYSTACK_PUBLIC_KEY', default='')
 
-# ── VTPass ────────────────────────────────────────────────────
-VTPASS_API_KEY = env('VTPASS_API_KEY', default='')
-VTPASS_SECRET_KEY = env('VTPASS_SECRET_KEY', default='')
-VTPASS_BASE_URL = env('VTPASS_BASE_URL', default='https://sandbox.vtpass.com/api')
-
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:8000')
 
-# ── Game Config ───────────────────────────────────────────────
+# ── Game & Withdrawal Configuration ──────────────────────────
 GAME_CONFIG = {
-    'DAILY_GAME_LIMIT':          env.int('DAILY_GAME_LIMIT', default=5),
-    'POINTS_TO_NAIRA_RATE':      float(env('POINTS_TO_NAIRA_RATE', default='0.05')),
-    'MIN_REDEMPTION_POINTS':     env.int('MIN_REDEMPTION_POINTS', default=2000),
-    'REFERRAL_BONUS_POINTS':     env.int('REFERRAL_BONUS_POINTS', default=500),
-    'DAILY_LOGIN_BONUS':         env.int('DAILY_LOGIN_BONUS', default=50),
-    'STREAK_BONUS_MULTIPLIER':   1.5,
-    'CHALLENGE_WIN_BONUS':       100,
-    'CLASSIC_MODE_QUESTIONS':    15,
-    'SURVIVAL_BASE_MULTIPLIER':  1.0,
+    # Daily game limit
+    'DAILY_GAME_LIMIT':            env.int('DAILY_GAME_LIMIT', default=10),
+
+    # Points → Naira conversion
+    'POINTS_TO_NAIRA_RATE':        float(env('POINTS_TO_NAIRA_RATE', default='0.05')),
+
+    # Withdrawal rules
+    'MIN_WITHDRAWAL_NAIRA':        500,     # Minimum ₦500 per withdrawal
+    'MAX_WEEKLY_WITHDRAWALS':      2,       # Max 2 withdrawals per week
+    'WITHDRAWAL_FEE_PERCENT':      5,       # 5% fee on every withdrawal
+    'MAX_WEEKLY_EARN_NAIRA':       2000,    # Max ₦2,000 cashable per week
+
+    # Bonus config
+    'REFERRAL_BONUS_POINTS':       env.int('REFERRAL_BONUS_POINTS', default=500),
+    'DAILY_LOGIN_BONUS':           env.int('DAILY_LOGIN_BONUS', default=50),
+    'STREAK_BONUS_MULTIPLIER':     1.5,
+    'CHALLENGE_WIN_BONUS':         100,
+
+    # Game mode config
+    'CLASSIC_MODE_QUESTIONS':      15,
+    'SURVIVAL_BASE_MULTIPLIER':    1.0,
     'SURVIVAL_MULTIPLIER_INCREMENT': 0.1,
-    'SPEED_MODE_DURATION':       60,
+    'SPEED_MODE_DURATION':         60,
     'LIFELINES_PER_CLASSIC_GAME': {
         'fifty_fifty': 1, 'phone_friend': 1,
         'ask_audience': 1, 'skip': 1, 'second_chance': 1,

@@ -12,12 +12,12 @@
       <div class="profile-email" id="profileEmail"></div>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
         <span class="badge badge-gold" id="profileStreak">🔥 0 day streak</span>
-        <span class="badge badge-gray" id="profileCountry">🇳🇬 Nigeria</span>
+        <span class="badge badge-gray" id="profileCountry">🌍 Nigeria</span>
         <span class="badge badge-gray" id="profileJoined"></span>
       </div>
     </div>
     <div style="text-align:right">
-      <div style="font-size:2rem;font-weight:900;color:var(--gold)" id="profilePoints">0</div>
+      <div style="font-size:2rem;font-weight:800;color:var(--gold)" id="profilePoints">0</div>
       <div style="font-size:0.8rem;color:var(--gray)">Total Points</div>
       <div style="font-size:0.9rem;color:var(--gray-l);margin-top:4px">≈ ₦<span id="profileNaira">0</span></div>
     </div>
@@ -38,8 +38,23 @@
       <div class="stat-value" id="pChallenges">0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Airtime Earned</div>
-      <div class="stat-value" id="pAirtime">₦0</div>
+      <div class="stat-label">Total Withdrawn</div>
+      <div class="stat-value" id="pWithdrawn">₦0</div>
+    </div>
+  </div>
+
+  <!-- Weekly Earnings Cap Bar -->
+  <div class="card" style="margin-bottom:24px;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:0.9rem;font-weight:600">Weekly Earnings Cap</div>
+      <span class="badge badge-gold" id="capBadge">₦0 / ₦2,000</span>
+    </div>
+    <div class="progress-bar" style="height:10px;border-radius:5px">
+      <div class="progress-fill" id="capFill" style="width:0%;border-radius:5px"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:0.78rem;color:var(--gray)">
+      <span id="capRemaining">₦2,000 remaining this week</span>
+      <span>Resets every Monday</span>
     </div>
   </div>
 
@@ -61,9 +76,7 @@
       <!-- Referral -->
       <div class="card">
         <h3 style="font-size:1rem;font-weight:700;margin-bottom:12px">🤝 Referral Programme</h3>
-        <p style="font-size:0.85rem;color:var(--gray-l);margin-bottom:14px">
-          Share your code. Earn 500 points for every friend who joins.
-        </p>
+        <p style="font-size:0.85rem;color:var(--gray-l);margin-bottom:14px">Share your code. Earn 500 points for every friend who joins.</p>
         <div style="display:flex;gap:8px;margin-bottom:16px">
           <div class="form-input" id="referralCode" style="font-weight:700;letter-spacing:2px;cursor:pointer;background:var(--bg3)">Loading...</div>
           <button class="btn btn-outline" onclick="copyReferral()" style="padding:0 18px;white-space:nowrap">📋 Copy</button>
@@ -87,47 +100,93 @@
 
     <!-- RIGHT COLUMN -->
     <div>
-      <!-- Redeem Airtime -->
+      <!-- Withdrawal Form -->
       <div class="redeem-card" style="margin-bottom:24px">
-        <h3 style="font-size:1rem;font-weight:700;margin-bottom:14px">📱 Redeem Airtime</h3>
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:6px">💸 Withdraw to Bank</h3>
+        <p style="font-size:0.78rem;color:var(--gray);margin-bottom:14px">
+          Min ₦500 · 5% fee · Max 2x per week · Max ₦2,000/week
+        </p>
+
+        <!-- Balance display -->
         <div class="redeem-balance">
-          <div class="redeem-pts" id="redeemPoints">0 pts</div>
-          <div class="redeem-naira">≈ ₦<span id="redeemNaira">0</span> airtime value</div>
-          <div style="font-size:0.75rem;color:var(--gray);margin-top:4px">Minimum: 2,000 pts = ₦100</div>
+          <div class="redeem-pts" id="wdPoints">0 pts</div>
+          <div class="redeem-naira">Cash value ≈ ₦<span id="wdNaira">0</span></div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Select Network</label>
-          <div class="network-pills">
-            <div class="network-pill selected" data-net="mtn"     onclick="selectNetwork('mtn',this)">MTN</div>
-            <div class="network-pill" data-net="airtel"   onclick="selectNetwork('airtel',this)">Airtel</div>
-            <div class="network-pill" data-net="glo"      onclick="selectNetwork('glo',this)">Glo</div>
-            <div class="network-pill" data-net="9mobile"  onclick="selectNetwork('9mobile',this)">9Mobile</div>
+        <!-- Withdrawal status -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+          <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:1rem;font-weight:700;color:var(--gold)" id="wdLeft">2</div>
+            <div style="font-size:0.72rem;color:var(--gray)">Withdrawals left this week</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:1rem;font-weight:700;color:var(--success)" id="wdEarnLeft">₦2,000</div>
+            <div style="font-size:0.72rem;color:var(--gray)">Earnable this week</div>
           </div>
         </div>
+
+        <!-- Error / Success messages -->
+        <div id="wdError" class="feedback-bar wrong" style="display:none;margin-bottom:12px"></div>
+        <div id="wdSuccess" style="display:none;background:rgba(46,204,113,0.12);border:1px solid var(--success);border-radius:10px;padding:14px;margin-bottom:12px;font-size:0.88rem;color:var(--success)"></div>
+
+        <!-- Form fields -->
         <div class="form-group">
-          <label class="form-label">Phone Number</label>
-          <input class="form-input" id="redeemPhone" type="tel" placeholder="e.g. 08012345678" maxlength="14"/>
+          <label class="form-label">Select Bank</label>
+          <select class="form-input" id="wdBank">
+            <option value="">Loading banks...</option>
+          </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Points to Redeem</label>
-          <input class="form-input" id="redeemPts" type="number" placeholder="Min 2000" min="2000" step="500"/>
-          <div class="form-hint">= ₦<span id="nairaPreview">0</span> airtime</div>
+          <label class="form-label">Account Number</label>
+          <input class="form-input" id="wdAccNum" type="tel" placeholder="e.g. 0123456789" maxlength="12"/>
         </div>
-        <button class="btn btn-gold btn-full" id="redeemBtn" onclick="redeemAirtime()">
-          💸 Redeem Airtime
+        <div class="form-group">
+          <label class="form-label">Account Name</label>
+          <input class="form-input" id="wdAccName" type="text" placeholder="As it appears on your account"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount to Withdraw (₦)</label>
+          <input class="form-input" id="wdAmount" type="number" placeholder="Min ₦500" min="500" step="100"/>
+          <div class="form-hint" id="wdFeeHint">Enter an amount to see the breakdown.</div>
+        </div>
+
+        <!-- Fee breakdown -->
+        <div id="wdBreakdown" style="display:none;background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:16px;font-size:0.85rem">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="color:var(--gray)">Amount requested</span>
+            <span id="bdRequested">₦0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="color:var(--gray)">Service fee (5%)</span>
+            <span id="bdFee" style="color:var(--error)">−₦0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="color:var(--gray)">Points to deduct</span>
+            <span id="bdPoints" style="color:var(--error)">0 pts</span>
+          </div>
+          <div style="height:1px;background:var(--border);margin:8px 0"></div>
+          <div style="display:flex;justify-content:space-between;font-weight:700">
+            <span>You receive</span>
+            <span id="bdReceive" style="color:var(--success)">₦0</span>
+          </div>
+        </div>
+
+        <button class="btn btn-gold btn-full" id="wdBtn" onclick="submitWithdrawal()">
+          💸 Submit Withdrawal Request
         </button>
+        <p style="font-size:0.73rem;color:var(--gray);text-align:center;margin-top:10px">
+          Withdrawals are reviewed and paid within 24–48 hours on business days.
+        </p>
       </div>
 
-      <!-- Transaction History -->
+      <!-- Withdrawal History -->
       <div class="card">
-        <h3 style="font-size:1rem;font-weight:700;margin-bottom:14px">📜 Recent Transactions</h3>
-        <div id="transactions">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:14px">📜 Withdrawal History</h3>
+        <div id="wdHistory">
           <div class="page-loader"><span class="spinner"></span></div>
         </div>
       </div>
     </div>
-
   </div>
 </div>
 {% endblock %}
@@ -135,26 +194,29 @@
 {% block extra_js %}
 <script>
 requireAuth();
-let selectedNetwork = 'mtn';
 const RATE = 0.05;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadProfile();
-  await loadAchievements();
-  await loadReferrals();
-  await loadTransactions();
+  await Promise.all([
+    loadProfile(),
+    loadAchievements(),
+    loadReferrals(),
+    loadBanks(),
+    loadWithdrawalHistory(),
+  ]);
 
-  // Live naira preview
-  document.getElementById('redeemPts').addEventListener('input', function() {
-    document.getElementById('nairaPreview').textContent = (this.value * RATE).toFixed(0);
-  });
+  // Live fee breakdown
+  document.getElementById('wdAmount').addEventListener('input', updateBreakdown);
 });
 
 async function loadProfile() {
   try {
-    const res = await apiGet('/users/me/');
-    if (!res.ok) return;
-    const u = await res.json();
+    const [profRes, balRes] = await Promise.all([
+      apiGet('/users/me/'),
+      apiGet('/rewards/points/'),
+    ]);
+    if (!profRes.ok) return;
+    const u = await profRes.json();
     localStorage.setItem('user', JSON.stringify(u));
 
     document.getElementById('profileAvatar').textContent  = (u.username||'U')[0].toUpperCase();
@@ -162,19 +224,150 @@ async function loadProfile() {
     document.getElementById('profileLevel').textContent   = `Level ${u.level} – ${u.level_name}`;
     document.getElementById('profileEmail').textContent   = u.email;
     document.getElementById('profileStreak').textContent  = `🔥 ${u.current_streak} day streak`;
-    document.getElementById('profileCountry').textContent = `🌍 ${u.country || 'Nigeria'}`;
+    document.getElementById('profileCountry').textContent = `🌍 ${u.country||'Nigeria'}`;
     document.getElementById('profileJoined').textContent  = `Joined ${fmtDate(u.date_joined)}`;
     document.getElementById('profilePoints').textContent  = fmtNum(u.total_points);
     document.getElementById('profileNaira').textContent   = (u.total_points * RATE).toFixed(0);
     document.getElementById('pGames').textContent         = fmtNum(u.total_games_played);
     document.getElementById('pAccuracy').textContent      = `${u.accuracy_rate||0}%`;
     document.getElementById('pChallenges').textContent    = fmtNum(u.total_challenges_won);
-    document.getElementById('pAirtime').textContent       = `₦${u.total_airtime_earned||0}`;
+    document.getElementById('pWithdrawn').textContent     = `₦${parseFloat(u.total_withdrawn_naira||0).toLocaleString()}`;
     document.getElementById('referralCode').textContent   = u.referral_code;
-    document.getElementById('redeemPoints').textContent   = `${fmtNum(u.total_points)} pts`;
-    document.getElementById('redeemNaira').textContent    = (u.total_points * RATE).toFixed(0);
+    document.getElementById('wdPoints').textContent       = `${fmtNum(u.total_points)} pts`;
+    document.getElementById('wdNaira').textContent        = (u.total_points * RATE).toFixed(2);
     document.getElementById('navPointsVal').textContent   = fmtNum(u.total_points);
+
+    if (balRes.ok) {
+      const bal = await balRes.json();
+      const cap = bal.weekly_earnings || {};
+      const earned = cap.earned_naira || 0;
+      const capMax = cap.cap_naira || 2000;
+      const pct = Math.min(100, ((earned / capMax) * 100).toFixed(1));
+
+      document.getElementById('capBadge').textContent    = `₦${earned} / ₦${fmtNum(capMax)}`;
+      document.getElementById('capFill').style.width     = pct + '%';
+      document.getElementById('capRemaining').textContent = `₦${fmtNum(cap.remaining_naira||2000)} remaining this week`;
+      document.getElementById('wdLeft').textContent       = bal.weekly_withdrawals_remaining || 2;
+      document.getElementById('wdEarnLeft').textContent   = `₦${fmtNum(cap.remaining_naira||2000)}`;
+
+      if (pct >= 100) {
+        document.getElementById('capFill').style.background = 'var(--error)';
+        document.getElementById('capBadge').style.background = 'rgba(231,76,60,0.15)';
+        document.getElementById('capBadge').style.color = 'var(--error)';
+      }
+    }
   } catch(e) { console.error(e); }
+}
+
+async function loadBanks() {
+  try {
+    const res = await apiGet('/rewards/withdraw/banks/');
+    if (!res.ok) return;
+    const data = await res.json();
+    const select = document.getElementById('wdBank');
+    select.innerHTML = '<option value="">— Select your bank —</option>' +
+      data.banks.map(b => `<option value="${b.value}">${b.label}</option>`).join('');
+  } catch {}
+}
+
+function updateBreakdown() {
+  const amount = parseFloat(document.getElementById('wdAmount').value);
+  if (!amount || amount < 500) {
+    document.getElementById('wdBreakdown').style.display = 'none';
+    document.getElementById('wdFeeHint').textContent = 'Enter an amount to see the breakdown.';
+    return;
+  }
+  const fee = (amount * 0.05).toFixed(2);
+  const receive = (amount - fee).toFixed(2);
+  const points = Math.ceil(amount / RATE);
+
+  document.getElementById('wdBreakdown').style.display = 'block';
+  document.getElementById('bdRequested').textContent = `₦${fmtNum(amount)}`;
+  document.getElementById('bdFee').textContent       = `−₦${fee}`;
+  document.getElementById('bdPoints').textContent    = `${fmtNum(points)} pts`;
+  document.getElementById('bdReceive').textContent   = `₦${fmtNum(receive)}`;
+  document.getElementById('wdFeeHint').textContent   = '';
+}
+
+async function submitWithdrawal() {
+  const bank       = document.getElementById('wdBank').value;
+  const accNum     = document.getElementById('wdAccNum').value.trim();
+  const accName    = document.getElementById('wdAccName').value.trim();
+  const amount     = parseFloat(document.getElementById('wdAmount').value);
+  const btn        = document.getElementById('wdBtn');
+  const errEl      = document.getElementById('wdError');
+  const okEl       = document.getElementById('wdSuccess');
+
+  errEl.style.display = 'none';
+  okEl.style.display  = 'none';
+
+  if (!bank)    { errEl.style.display='block'; errEl.textContent='Please select your bank.'; return; }
+  if (!accNum)  { errEl.style.display='block'; errEl.textContent='Please enter your account number.'; return; }
+  if (!accName) { errEl.style.display='block'; errEl.textContent='Please enter your account name.'; return; }
+  if (!amount || amount < 500) { errEl.style.display='block'; errEl.textContent='Minimum withdrawal is ₦500.'; return; }
+
+  setLoading(btn, true, 'Processing...');
+  try {
+    const res  = await apiPost('/rewards/withdraw/', {
+      bank_name: bank, account_number: accNum,
+      account_name: accName, amount_naira: amount,
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      okEl.style.display = 'block';
+      okEl.innerHTML = `
+        ✅ <strong>Withdrawal submitted!</strong><br/>
+        Ref: <strong>${data.reference}</strong><br/>
+        Amount: ₦${parseFloat(data.amount_requested).toLocaleString()} →
+        You receive: <strong>₦${parseFloat(data.amount_to_receive).toLocaleString()}</strong><br/>
+        <span style="font-size:0.78rem;color:var(--gray)">Processed within 24–48 hours on business days.</span>
+      `;
+      // Clear form
+      document.getElementById('wdAmount').value  = '';
+      document.getElementById('wdAccNum').value  = '';
+      document.getElementById('wdAccName').value = '';
+      document.getElementById('wdBank').value    = '';
+      document.getElementById('wdBreakdown').style.display = 'none';
+      loadProfile();
+      loadWithdrawalHistory();
+    } else {
+      const msg = data.error || Object.values(data).flat()[0] || 'Withdrawal failed.';
+      errEl.style.display = 'block'; errEl.textContent = msg;
+    }
+  } catch {
+    errEl.style.display = 'block'; errEl.textContent = 'Connection error. Try again.';
+  }
+  setLoading(btn, false, '💸 Submit Withdrawal Request');
+}
+
+async function loadWithdrawalHistory() {
+  const el = document.getElementById('wdHistory');
+  try {
+    const res = await apiGet('/rewards/withdraw/history/');
+    if (!res.ok) { el.innerHTML='<p class="text-gray text-center" style="font-size:.85rem">No withdrawals yet.</p>'; return; }
+    const data = await res.json();
+    const list = data.results || data;
+    if (!list.length) { el.innerHTML='<p class="text-gray text-center" style="font-size:.85rem">No withdrawals yet.</p>'; return; }
+
+    const statusColors = {
+      pending: 'var(--gold)', approved: 'var(--info)',
+      completed: 'var(--success)', rejected: 'var(--error)', failed: 'var(--error)',
+    };
+
+    el.innerHTML = list.slice(0,8).map(w => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:0.85rem;font-weight:600">₦${parseFloat(w.amount_to_receive).toLocaleString()} → ${w.bank_display}</div>
+          <div style="font-size:0.75rem;color:var(--gray)">${w.account_number} · Ref: ${w.reference}</div>
+          <div style="font-size:0.72rem;color:var(--gray)">${fmtDate(w.created_at)}</div>
+          ${w.rejection_reason ? `<div style="font-size:0.72rem;color:var(--error)">Reason: ${w.rejection_reason}</div>` : ''}
+        </div>
+        <span style="font-size:0.75rem;font-weight:700;color:${statusColors[w.status]||'var(--gray)'}">
+          ${w.status_display.toUpperCase()}
+        </span>
+      </div>`).join('');
+  } catch { el.innerHTML='<p class="text-gray">Could not load history.</p>'; }
 }
 
 async function loadAchievements() {
@@ -187,14 +380,13 @@ async function loadAchievements() {
     const all  = allRes.ok ? await allRes.json() : [];
     const mine = myRes.ok  ? await myRes.json()  : [];
     const earned = new Set(mine.map(m => m.achievement.id));
-
     document.getElementById('achCount').textContent = `${earned.size}/${all.length}`;
     grid.innerHTML = all.map(a => `
-      <div class="ach-card ${earned.has(a.id) ? 'earned' : 'locked'}" title="${a.description}">
+      <div class="ach-card ${earned.has(a.id)?'earned':'locked'}" title="${a.description}">
         <div class="ach-emoji">${a.badge_emoji}</div>
         <div class="ach-name">${a.name}</div>
       </div>`).join('');
-  } catch { grid.innerHTML = '<p class="text-gray text-center">Could not load achievements.</p>'; }
+  } catch { grid.innerHTML='<p class="text-gray text-center">Could not load.</p>'; }
 }
 
 async function loadReferrals() {
@@ -202,65 +394,10 @@ async function loadReferrals() {
     const res = await apiGet('/users/me/referrals/');
     if (!res.ok) return;
     const d = await res.json();
-    document.getElementById('refTotal').textContent   = d.total_referrals   || 0;
-    document.getElementById('refPaid').textContent    = d.paid_referrals     || 0;
-    document.getElementById('refPending').textContent = d.pending_referrals  || 0;
+    document.getElementById('refTotal').textContent   = d.total_referrals  || 0;
+    document.getElementById('refPaid').textContent    = d.paid_referrals    || 0;
+    document.getElementById('refPending').textContent = d.pending_referrals || 0;
   } catch {}
-}
-
-async function loadTransactions() {
-  const el = document.getElementById('transactions');
-  try {
-    const res = await apiGet('/rewards/transactions/');
-    if (!res.ok) { el.innerHTML = '<p class="text-gray">No transactions yet.</p>'; return; }
-    const txns = await res.json();
-    const list = txns.results || txns;
-    if (!list.length) { el.innerHTML = '<p class="text-gray text-center" style="font-size:0.88rem">No transactions yet.</p>'; return; }
-    el.innerHTML = list.slice(0,8).map(t => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-        <div>
-          <div style="font-size:0.88rem;font-weight:600">${t.type_display}</div>
-          <div style="font-size:0.75rem;color:var(--gray)">${fmtDate(t.created_at)}</div>
-        </div>
-        <div style="font-size:0.95rem;font-weight:700;color:${t.amount >= 0 ? 'var(--success)' : 'var(--error)'}">
-          ${t.amount >= 0 ? '+' : ''}${fmtNum(t.amount)} pts
-        </div>
-      </div>`).join('');
-  } catch { el.innerHTML = '<p class="text-gray">Could not load transactions.</p>'; }
-}
-
-function selectNetwork(net, el) {
-  selectedNetwork = net;
-  document.querySelectorAll('.network-pill').forEach(p => p.classList.remove('selected'));
-  el.classList.add('selected');
-}
-
-async function redeemAirtime() {
-  const phone  = document.getElementById('redeemPhone').value.trim();
-  const points = parseInt(document.getElementById('redeemPts').value);
-  const btn    = document.getElementById('redeemBtn');
-
-  if (!phone) { toast('Enter your phone number.', 'error'); return; }
-  if (!points || points < 2000) { toast('Minimum redemption is 2,000 points.', 'error'); return; }
-
-  setLoading(btn, true, 'Processing...');
-  try {
-    const res  = await apiPost('/rewards/airtime/redeem/', {
-      network: selectedNetwork, phone_number: phone, points_to_redeem: points
-    });
-    const data = await res.json();
-    if (res.ok) {
-      toast(`✅ Redemption submitted! ₦${data.naira_value} airtime coming to ${phone}`, 'success', 6000);
-      document.getElementById('redeemPts').value = '';
-      document.getElementById('redeemPhone').value = '';
-      loadProfile();
-      loadTransactions();
-    } else {
-      const msg = Object.values(data).flat()[0] || data.error || 'Redemption failed.';
-      toast(msg, 'error');
-    }
-  } catch { toast('Connection error.', 'error'); }
-  setLoading(btn, false, '💸 Redeem Airtime');
 }
 
 function copyReferral() {

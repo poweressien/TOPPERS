@@ -1,6 +1,7 @@
+from decimal import Decimal
 from rest_framework import serializers
 from django.conf import settings
-from .models import PointTransaction, Achievement, UserAchievement, AirtimeRedemption
+from .models import PointTransaction, Achievement, UserAchievement, WithdrawalRequest
 
 GAME_CONFIG = settings.GAME_CONFIG
 
@@ -27,32 +28,48 @@ class UserAchievementSerializer(serializers.ModelSerializer):
         fields = ['id', 'achievement', 'earned_at']
 
 
-class RedeemAirtimeSerializer(serializers.Serializer):
-    network = serializers.ChoiceField(choices=['mtn', 'airtel', 'glo', '9mobile'])
-    phone_number = serializers.CharField(min_length=11, max_length=14)
-    points_to_redeem = serializers.IntegerField(min_value=GAME_CONFIG['MIN_REDEMPTION_POINTS'])
-
-    def validate_points_to_redeem(self, value):
-        user = self.context['request'].user
-        if value > user.total_points:
-            raise serializers.ValidationError('Insufficient points.')
-        return value
-
-    def validate_phone_number(self, value):
-        cleaned = value.replace(' ', '').replace('-', '')
-        if not cleaned.isdigit():
-            raise serializers.ValidationError('Phone number must contain only digits.')
-        return cleaned
-
-
-class AirtimeRedemptionSerializer(serializers.ModelSerializer):
-    network_display = serializers.CharField(source='get_network_display', read_only=True)
+class WithdrawalRequestSerializer(serializers.ModelSerializer):
+    bank_display = serializers.ReadOnlyField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
-        model = AirtimeRedemption
+        model = WithdrawalRequest
         fields = [
-            'id', 'network', 'network_display', 'phone_number',
-            'points_used', 'naira_value', 'status', 'status_display',
+            'id', 'reference', 'bank_name', 'bank_display',
+            'account_number', 'account_name',
+            'amount_requested', 'fee_amount', 'amount_to_receive',
+            'points_deducted', 'status', 'status_display',
+            'rejection_reason', 'created_at', 'processed_at',
+        ]
+        read_only_fields = [
+            'id', 'reference', 'fee_amount', 'amount_to_receive',
+            'points_deducted', 'status', 'rejection_reason',
             'created_at', 'processed_at',
         ]
+
+
+class WithdrawalRequestCreateSerializer(serializers.Serializer):
+    amount_naira   = serializers.DecimalField(max_digits=10, decimal_places=2,
+                                              min_value=Decimal(str(GAME_CONFIG['MIN_WITHDRAWAL_NAIRA'])))
+    bank_name      = serializers.ChoiceField(choices=[b[0] for b in WithdrawalRequest.BANK_CHOICES])
+    account_number = serializers.CharField(min_length=10, max_length=20)
+    account_name   = serializers.CharField(min_length=3, max_length=200)
+
+    def validate_account_number(self, value):
+        cleaned = value.strip().replace(' ', '')
+        if not cleaned.isdigit():
+            raise serializers.ValidationError('Account number must contain only digits.')
+        return cleaned
+
+    def validate_amount_naira(self, value):
+        request = self.context.get('request')
+        if not request:
+            return value
+        user = request.user
+        rate = GAME_CONFIG['POINTS_TO_NAIRA_RATE']
+        points_needed = int(float(value) / rate)
+        if user.total_points < points_needed:
+            raise serializers.ValidationError(
+                f'Insufficient points. You need {points_needed:,} pts for ₦{value:,}.'
+            )
+        return value

@@ -55,7 +55,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'referral_code', 'current_streak', 'longest_streak',
             'total_games_played', 'total_correct_answers',
             'total_wrong_answers', 'total_challenges_won',
-            'total_airtime_earned', 'accuracy_rate',
+            'total_withdrawn_naira', 'accuracy_rate',
             'referral_count', 'is_email_verified', 'date_joined',
         ]
         read_only_fields = [
@@ -63,7 +63,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'referral_code', 'current_streak', 'longest_streak',
             'total_games_played', 'total_correct_answers',
             'total_wrong_answers', 'total_challenges_won',
-            'total_airtime_earned', 'is_email_verified', 'date_joined',
+            'total_withdrawn_naira', 'is_email_verified', 'date_joined',
         ]
 
     def get_referral_count(self, obj):

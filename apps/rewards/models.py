@@ -1,16 +1,16 @@
 import uuid
+import shortuuid
 from django.db import models
+from django.utils import timezone
 
 
 class PointTransaction(models.Model):
-    """Ledger of every point movement for a user."""
-
     TYPE_EARNED_GAME    = 'earned_game'
     TYPE_DAILY_BONUS    = 'daily_bonus'
     TYPE_STREAK_BONUS   = 'streak_bonus'
     TYPE_REFERRAL_BONUS = 'referral_bonus'
     TYPE_CHALLENGE_WIN  = 'challenge_win'
-    TYPE_REDEEMED       = 'redeemed'
+    TYPE_WITHDRAWN      = 'withdrawn'
     TYPE_AD_BONUS       = 'ad_bonus'
     TYPE_EVENT_BONUS    = 'event_bonus'
     TYPE_ADMIN_CREDIT   = 'admin_credit'
@@ -21,7 +21,7 @@ class PointTransaction(models.Model):
         (TYPE_STREAK_BONUS,   'Streak Bonus'),
         (TYPE_REFERRAL_BONUS, 'Referral Bonus'),
         (TYPE_CHALLENGE_WIN,  'Challenge Win'),
-        (TYPE_REDEEMED,       'Redeemed for Airtime'),
+        (TYPE_WITHDRAWN,      'Withdrawn to Bank'),
         (TYPE_AD_BONUS,       'Ad Reward'),
         (TYPE_EVENT_BONUS,    'Event Bonus'),
         (TYPE_ADMIN_CREDIT,   'Admin Credit'),
@@ -48,26 +48,15 @@ class PointTransaction(models.Model):
 
 
 class Achievement(models.Model):
-    """Platform achievements / badges."""
-
-    TYPE_STREAK   = 'streak'
-    TYPE_GAMES    = 'games'
-    TYPE_SCORE    = 'score'
-    TYPE_REFERRAL = 'referral'
-    TYPE_ACCURACY = 'accuracy'
-    TYPE_LEVEL    = 'level'
-    TYPE_CATEGORY = 'category'
-    TYPE_SPECIAL  = 'special'
-
     TYPE_CHOICES = [
-        (TYPE_STREAK,   'Streak'),
-        (TYPE_GAMES,    'Games Played'),
-        (TYPE_SCORE,    'Score'),
-        (TYPE_REFERRAL, 'Referral'),
-        (TYPE_ACCURACY, 'Accuracy'),
-        (TYPE_LEVEL,    'Level'),
-        (TYPE_CATEGORY, 'Category'),
-        (TYPE_SPECIAL,  'Special'),
+        ('streak',   'Streak'),
+        ('games',    'Games Played'),
+        ('score',    'Score'),
+        ('referral', 'Referral'),
+        ('accuracy', 'Accuracy'),
+        ('level',    'Level'),
+        ('category', 'Category'),
+        ('special',  'Special'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -75,8 +64,8 @@ class Achievement(models.Model):
     description = models.TextField()
     badge_emoji = models.CharField(max_length=10, default='🏆')
     achievement_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    threshold = models.IntegerField(default=1, help_text='Value needed to unlock')
-    points_reward = models.IntegerField(default=0, help_text='Bonus points on unlock')
+    threshold = models.IntegerField(default=1)
+    points_reward = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
     order = models.IntegerField(default=0)
 
@@ -88,8 +77,6 @@ class Achievement(models.Model):
 
 
 class UserAchievement(models.Model):
-    """Records when a user earns an achievement."""
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE, related_name='achievements')
     achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE, related_name='earned_by')
@@ -102,19 +89,47 @@ class UserAchievement(models.Model):
         return f'{self.user.username} – {self.achievement.name}'
 
 
-class AirtimeRedemption(models.Model):
-    """Airtime redemption request."""
+def generate_withdrawal_ref():
+    return f'TPS-{shortuuid.ShortUUID().random(length=10).upper()}'
 
-    NETWORK_MTN    = 'mtn'
-    NETWORK_AIRTEL = 'airtel'
-    NETWORK_GLO    = 'glo'
-    NETWORK_9MOBILE = '9mobile'
 
-    NETWORK_CHOICES = [
-        (NETWORK_MTN,     'MTN'),
-        (NETWORK_AIRTEL,  'Airtel'),
-        (NETWORK_GLO,     'Glo'),
-        (NETWORK_9MOBILE, '9Mobile'),
+class WithdrawalRequest(models.Model):
+    """Real money withdrawal to Nigerian bank accounts."""
+
+    BANK_CHOICES = [
+        # Commercial Banks
+        ('access',      'Access Bank'),
+        ('citibank',    'Citibank Nigeria'),
+        ('ecobank',     'Ecobank Nigeria'),
+        ('fcmb',        'FCMB'),
+        ('fidelity',    'Fidelity Bank'),
+        ('firstbank',   'First Bank of Nigeria'),
+        ('gtbank',      'Guaranty Trust Bank (GTBank)'),
+        ('heritage',    'Heritage Bank'),
+        ('jaiz',        'Jaiz Bank'),
+        ('keystone',    'Keystone Bank'),
+        ('polaris',     'Polaris Bank'),
+        ('providus',    'Providus Bank'),
+        ('stanbic',     'Stanbic IBTC Bank'),
+        ('sterling',    'Sterling Bank'),
+        ('suntrust',    'SunTrust Bank'),
+        ('titan',       'Titan Bank'),
+        ('uba',         'United Bank for Africa (UBA)'),
+        ('union',       'Union Bank'),
+        ('unity',       'Unity Bank'),
+        ('wema',        'Wema Bank'),
+        ('zenith',      'Zenith Bank'),
+        # Microfinance / Online Banks
+        ('carbon',      'Carbon (One Finance)'),
+        ('fairmoney',   'FairMoney Microfinance Bank'),
+        ('kuda',        'Kuda Bank'),
+        ('moniepoint',  'Moniepoint Microfinance Bank'),
+        ('opay',        'OPay Digital Services'),
+        ('palmpay',     'PalmPay'),
+        ('rubies',      'Rubies Bank'),
+        ('vfd',         'VFD Microfinance Bank'),
+        ('branch',      'Branch International Finance'),
+        ('eyowo',       'Eyowo'),
     ]
 
     STATUS_PENDING    = 'pending'
@@ -122,6 +137,7 @@ class AirtimeRedemption(models.Model):
     STATUS_PROCESSING = 'processing'
     STATUS_COMPLETED  = 'completed'
     STATUS_REJECTED   = 'rejected'
+    STATUS_FAILED     = 'failed'
 
     STATUS_CHOICES = [
         (STATUS_PENDING,    'Pending'),
@@ -129,22 +145,38 @@ class AirtimeRedemption(models.Model):
         (STATUS_PROCESSING, 'Processing'),
         (STATUS_COMPLETED,  'Completed'),
         (STATUS_REJECTED,   'Rejected'),
+        (STATUS_FAILED,     'Failed'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE, related_name='airtime_redemptions')
-    network = models.CharField(max_length=20, choices=NETWORK_CHOICES)
-    phone_number = models.CharField(max_length=15)
-    points_used = models.IntegerField()
-    naira_value = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
-    vtpass_reference = models.CharField(max_length=100, blank=True)
-    admin_notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    processed_at = models.DateTimeField(null=True, blank=True)
+    user = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE, related_name='withdrawal_requests')
+
+    # Amount breakdown
+    amount_requested = models.DecimalField(max_digits=10, decimal_places=2, help_text='Amount before fee')
+    fee_amount       = models.DecimalField(max_digits=10, decimal_places=2, help_text='5% fee')
+    amount_to_receive = models.DecimalField(max_digits=10, decimal_places=2, help_text='Amount after fee deduction')
+    points_deducted  = models.IntegerField(help_text='Points deducted for this withdrawal')
+
+    # Bank details
+    bank_name       = models.CharField(max_length=50, choices=BANK_CHOICES)
+    account_number  = models.CharField(max_length=20)
+    account_name    = models.CharField(max_length=200)
+
+    # Status & tracking
+    status          = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    reference       = models.CharField(max_length=30, unique=True, default=generate_withdrawal_ref)
+    admin_notes     = models.TextField(blank=True)
+    rejection_reason = models.CharField(max_length=300, blank=True)
+
+    created_at      = models.DateTimeField(auto_now_add=True)
+    processed_at    = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'{self.user.username} – ₦{self.naira_value} ({self.status})'
+        return f'{self.user.username} – ₦{self.amount_to_receive} → {self.get_bank_name_display()} ({self.status})'
+
+    @property
+    def bank_display(self):
+        return self.get_bank_name_display()

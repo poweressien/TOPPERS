@@ -4,13 +4,13 @@ from rest_framework import status, permissions, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import PointTransaction, Achievement, UserAchievement, AirtimeRedemption
+from .models import PointTransaction, Achievement, UserAchievement, WithdrawalRequest
 from .serializers import (
     PointTransactionSerializer, AchievementSerializer,
-    UserAchievementSerializer, RedeemAirtimeSerializer,
-    AirtimeRedemptionSerializer,
+    UserAchievementSerializer, WithdrawalRequestSerializer,
+    WithdrawalRequestCreateSerializer,
 )
-from .services import PointsService
+from .services import PointsService, EarningsCapService, WithdrawalEligibilityService
 
 GAME_CONFIG = settings.GAME_CONFIG
 
@@ -19,13 +19,25 @@ class PointsBalanceView(APIView):
     def get(self, request):
         user = request.user
         rate = GAME_CONFIG['POINTS_TO_NAIRA_RATE']
-        min_pts = GAME_CONFIG['MIN_REDEMPTION_POINTS']
+        min_wd = GAME_CONFIG['MIN_WITHDRAWAL_NAIRA']
+        fee_pct = GAME_CONFIG['WITHDRAWAL_FEE_PERCENT']
+
+        min_pts = int(min_wd / rate)
+        cap_info = EarningsCapService.get_remaining_earnable(user)
+        weekly_wds = WithdrawalEligibilityService.get_week_withdrawals(user)
+        max_wds = GAME_CONFIG['MAX_WEEKLY_WITHDRAWALS']
+
         return Response({
             'total_points': user.total_points,
             'naira_equivalent': round(user.total_points * rate, 2),
-            'min_redemption_points': min_pts,
-            'min_redemption_naira': round(min_pts * rate, 2),
-            'can_redeem': user.total_points >= min_pts,
+            'min_withdrawal_naira': min_wd,
+            'min_withdrawal_points': min_pts,
+            'withdrawal_fee_percent': fee_pct,
+            'can_withdraw': user.total_points >= min_pts,
+            'weekly_earnings': cap_info,
+            'weekly_withdrawals_used': weekly_wds,
+            'weekly_withdrawals_remaining': max(0, max_wds - weekly_wds),
+            'max_weekly_withdrawals': max_wds,
         })
 
 
@@ -37,7 +49,6 @@ class TransactionHistoryView(generics.ListAPIView):
 
 
 class DailyLoginBonusView(APIView):
-    """Claim the daily login bonus."""
     def post(self, request):
         bonus = PointsService.award_daily_login_bonus(request.user)
         if bonus is None:
@@ -51,64 +62,79 @@ class DailyLoginBonusView(APIView):
 
 
 class AchievementListView(generics.ListAPIView):
-    """All platform achievements."""
     queryset = Achievement.objects.filter(is_active=True)
     serializer_class = AchievementSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
 class UserAchievementView(generics.ListAPIView):
-    """Achievements earned by the authenticated user."""
     serializer_class = UserAchievementSerializer
 
     def get_queryset(self):
         return UserAchievement.objects.filter(user=self.request.user).select_related('achievement')
 
 
-class RedeemAirtimeView(APIView):
-    """Redeem points for airtime."""
+class WithdrawalRequestView(APIView):
+    """Submit a withdrawal request."""
+
     def post(self, request):
-        serializer = RedeemAirtimeSerializer(data=request.data, context={'request': request})
+        serializer = WithdrawalRequestCreateSerializer(
+            data=request.data, context={'request': request}
+        )
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        user = request.user
-        rate = GAME_CONFIG['POINTS_TO_NAIRA_RATE']
-        points = data['points_to_redeem']
-        naira_value = round(points * rate, 2)
-
-        # Deduct points
-        PointsService.deduct_points(
-            user=user,
-            amount=points,
-            transaction_type=PointTransaction.TYPE_REDEEMED,
-            description=f'Airtime redemption – ₦{naira_value} to {data["phone_number"]}',
+        wd, error = PointsService.process_withdrawal(
+            user=request.user,
+            amount_naira=float(data['amount_naira']),
+            bank_name=data['bank_name'],
+            account_number=data['account_number'],
+            account_name=data['account_name'],
         )
 
-        redemption = AirtimeRedemption.objects.create(
-            user=user,
-            network=data['network'],
-            phone_number=data['phone_number'],
-            points_used=points,
-            naira_value=naira_value,
-        )
+        if error:
+            return Response({'error': error}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Update user's airtime earned total
-        user.total_airtime_earned += naira_value
-        user.save(update_fields=['total_airtime_earned'])
+        # Notify user
+        try:
+            from apps.notifications.utils import send_notification
+            send_notification(
+                request.user,
+                'Withdrawal Request Submitted',
+                f'Your withdrawal of ₦{wd.amount_to_receive} to '
+                f'{wd.get_bank_name_display()} ({wd.account_number}) '
+                f'is being processed. Ref: {wd.reference}',
+                'reward',
+            )
+        except Exception:
+            pass
 
         return Response({
-            'message': 'Redemption request submitted. Airtime will be sent shortly.',
-            'redemption_id': str(redemption.id),
-            'naira_value': str(naira_value),
-            'points_used': points,
-            'new_balance': user.total_points,
-            'status': redemption.status,
+            'message': 'Withdrawal request submitted successfully.',
+            'reference': wd.reference,
+            'amount_requested': str(wd.amount_requested),
+            'fee': str(wd.fee_amount),
+            'amount_to_receive': str(wd.amount_to_receive),
+            'bank': wd.get_bank_name_display(),
+            'account_number': wd.account_number,
+            'account_name': wd.account_name,
+            'status': wd.status,
+            'new_balance': request.user.total_points,
         }, status=status.HTTP_201_CREATED)
 
 
-class AirtimeHistoryView(generics.ListAPIView):
-    serializer_class = AirtimeRedemptionSerializer
+class WithdrawalHistoryView(generics.ListAPIView):
+    serializer_class = WithdrawalRequestSerializer
 
     def get_queryset(self):
-        return AirtimeRedemption.objects.filter(user=self.request.user)
+        return WithdrawalRequest.objects.filter(user=self.request.user)
+
+
+class WithdrawalBanksView(APIView):
+    """Return the full list of supported banks."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        banks = [{'value': code, 'label': name}
+                 for code, name in WithdrawalRequest.BANK_CHOICES]
+        return Response({'banks': banks})
